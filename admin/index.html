@@ -56,6 +56,7 @@
       <button data-tab="sessions" class="on">Sessions</button>
       <button data-tab="issues">Issues</button>
       <button data-tab="accounts">Spotify accounts</button>
+      <button data-tab="links">Participant links</button>
     </nav>
     <span class="spacer"></span>
     <span class="muted" id="who"></span>
@@ -94,6 +95,21 @@
       <div class="card">
         <div class="row"><button class="btn" id="refreshIssues">Refresh</button><span class="muted">Latest audio errors, email timeouts, hidden tabs and upload errors across all sessions.</span></div>
         <table><thead><tr><th>When</th><th>Participant</th><th>Type</th><th>Phase</th><th>Detail</th></tr></thead><tbody id="issueRows"></tbody></table>
+      </div>
+    </section>
+
+    <section id="tab-links" hidden>
+      <div class="card">
+        <div class="row">
+          <label>Study key <input id="linkKey" placeholder="paste STUDY_KEY (not stored)" size="30"></label>
+          <label>From <input id="linkFrom" type="number" value="1" min="1" max="99" style="width:64px"></label>
+          <label>To <input id="linkTo" type="number" value="12" min="1" max="99" style="width:64px"></label>
+          <button class="btn primary" id="genLinks">Generate</button>
+          <button class="btn" id="copyAll">Copy all</button>
+        </div>
+        <p class="muted">One link per participant. The mode order is assigned from the number (P01 = O1 ... P06 = O6, P07 = O1 ...), so each of the 6 orders is used evenly.
+        The study key is only used to build the links in your browser and is not sent anywhere.</p>
+        <table><thead><tr><th>Participant</th><th>Order</th><th>Link</th><th></th></tr></thead><tbody id="linkRows"></tbody></table>
       </div>
     </section>
 
@@ -162,7 +178,7 @@ $("signout").onclick = async () => { await sb.auth.signOut(); location.reload();
 
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
-  for (const t of ["sessions", "issues", "accounts"]) $("tab-" + t).hidden = t !== b.dataset.tab;
+  for (const t of ["sessions", "issues", "accounts", "links"]) $("tab-" + t).hidden = t !== b.dataset.tab;
   if (b.dataset.tab === "issues") loadIssues();
   if (b.dataset.tab === "accounts") loadAccounts();
 });
@@ -320,6 +336,31 @@ async function handleSpotifyReturn() {
   } catch (e) { say("Link failed: " + e.message, true); }
   ["sp_verifier", "sp_state", "sp_label"].forEach(k => sessionStorage.removeItem(k));
 }
+
+// ---------- participant links ----------
+const ORDERS = { O1: "AUTO DIGI PHYS", O2: "AUTO PHYS DIGI", O3: "DIGI AUTO PHYS", O4: "DIGI PHYS AUTO", O5: "PHYS AUTO DIGI", O6: "PHYS DIGI AUTO" };
+const SITE = location.origin + location.pathname.replace(/admin\/?$/, "");
+let generated = [];
+$("genLinks").onclick = () => {
+  const key = $("linkKey").value.trim();
+  const from = Math.max(1, +$("linkFrom").value || 1), to = Math.min(99, +$("linkTo").value || from);
+  if (!key) { say("Paste the study key first.", true); return; }
+  say("");
+  generated = [];
+  for (let n = from; n <= to; n++) {
+    const pid = "P" + String(n).padStart(2, "0"), order = "O" + (((n - 1) % 6) + 1);
+    generated.push({ pid, order, url: `${SITE}?pid=${pid}&k=${encodeURIComponent(key)}` });
+  }
+  $("linkRows").replaceChildren(...generated.map(g => el("tr", {},
+    el("td", {}, el("strong", { textContent: g.pid })),
+    el("td", { textContent: `${g.order}: ${ORDERS[g.order]}` }),
+    el("td", {}, el("span", { className: "mono", textContent: g.url })),
+    el("td", {}, el("button", { className: "btn", textContent: "Copy", onclick: () => navigator.clipboard.writeText(g.url).then(() => say("Copied " + g.pid)) })))));
+};
+$("copyAll").onclick = () => {
+  if (!generated.length) return;
+  navigator.clipboard.writeText(generated.map(g => `${g.pid}\t${g.url}`).join("\n")).then(() => say(`Copied ${generated.length} links.`));
+};
 
 boot();
 </script>

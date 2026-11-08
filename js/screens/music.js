@@ -31,6 +31,11 @@ export function render(root, api) {
   if (audio.kind === "spotify") {
     const input = el("input", { type: "text", placeholder: "https://open.spotify.com/playlist/...", spellcheck: "false", autocomplete: "off" });
     const load = el("button", { class: "primary", onclick: async () => {
+      if (!api.session.studyKey) {
+        msg.textContent = "This link is missing its access key. Please ask the researcher for a new link.";
+        log("audio_error", { kind: "missing_key" });
+        return;
+      }
       msg.textContent = "Connecting to Spotify...";
       try {
         await audio.activate();            // inside the click: unlocks audio playback

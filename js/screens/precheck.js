@@ -1,10 +1,12 @@
 import { el, screen, mount, continueBtn } from "../ui.js";
 import { log } from "../log.js";
+import { probeLatency, logKeyboardLayout, logAudioDevice } from "../probe.js";
 
 export function render(root, api) {
   const c = api.content.precheck;
   const min = api.cfg.minScreen;
   const state = { headphones: false, keyboard: false };
+  probeLatency(api.cfg); logKeyboardLayout(); logAudioDevice();   // non-blocking, logged for analysis
 
   const sizeOk = () => api.session.flags.debug || (innerWidth >= min.w && innerHeight >= min.h);
   const btn = continueBtn(() => {
