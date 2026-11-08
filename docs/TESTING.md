@@ -33,7 +33,7 @@ Last updated: 2026-11-08 (after Stage 8 and the repo cleanup). A shareable, edit
 |---|---|---|
 | AUTO / DIGI / PHYS prompts, sizes 220 x 56, at least 250 px below the text box, wrong inputs logged, typing unlocks only after `music_play` | Done (synthetic audio) | `&audio=synthetic` |
 | Same, with real Spotify audio | **To do** | section 4 |
-| Practice shows one interruption per mode in the participant's order, flagged `practice:true` | Done (synthetic) | practice phase |
+| Practice is typing only. Each block starts with one flagged rehearsal interruption (`practice:true`, `intr` 0) in its own mode, then 4 real ones (`intr` 1 to 12 over the study) | Done (synthetic audio) | practice, then block 1 |
 | Status icon (playing/paused) visible in the same corner in all modes | **To do** (visual) | look bottom right |
 | Prompt position OK on 1280 x 720 and on a large monitor | **To do** | resize |
 

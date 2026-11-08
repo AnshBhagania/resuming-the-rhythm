@@ -481,14 +481,14 @@ $("resetSettings").onclick = () => { renderGazeForm(GAZE_DEFAULTS); renderPhysFo
 const TEST_SCREENS = {
   welcome: "Welcome", consent: "Consent", camera: "Camera permission (eye tracking)", precheck: "Pre-check (headphones, keyboard, screen, DRM)",
   music: "Music choice and sound test", demographics: "About you", gaze: "Eye-tracking calibration", instructions: "Instructions",
-  practice: "Practice (typing + 3 interruptions, one per mode)", baseline: "Baseline typing", debrief: "Final questions", done: "Done and upload"
+  practice: "Practice (typing only, no interruptions)", baseline: "Baseline typing", debrief: "Final questions", done: "Done and upload"
 };
 function testSteps(order) {
   const conds = ORDERS[order].split(" ");
   const steps = ["welcome", "consent", "camera", "precheck", "music", "demographics", "gaze", "instructions", "practice", "baseline"].map(s => ({ screen: s, label: TEST_SCREENS[s], phase: s }));
   conds.forEach((c, i) => {
     steps.push({ screen: "blockIntro", label: `Block ${i + 1} intro (${c})`, phase: "block" });
-    steps.push({ screen: "typing", label: `Block ${i + 1} typing with 4 interruptions (${c})`, phase: "block" });
+    steps.push({ screen: "typing", label: `Block ${i + 1} typing: 1 flagged rehearsal + 4 interruptions (${c})`, phase: "block" });
     steps.push({ screen: "questions", label: `Block ${i + 1} questions (${c})`, phase: "questions" });
   });
   steps.push({ screen: "debrief", label: TEST_SCREENS.debrief, phase: "debrief" }, { screen: "done", label: TEST_SCREENS.done, phase: "debrief" });

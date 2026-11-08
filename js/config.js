@@ -12,9 +12,9 @@ export const CONFIG = {
   musicFadeInMs: 200,
   resumeNoteMs: 1500,
   playTimeoutMs: 15000,
-  practiceFirstDelaySeconds: 15,
-  practiceGapSeconds: 15,
-  practiceTailSeconds: 10,
+  practiceSeconds: 60,              // practice is plain typing; interruptions are rehearsed once per block instead
+  rehearsalPerBlock: true,          // one flagged practice interruption at the start of each block, in that block's mode
+  rehearsalDelaySeconds: 15,
   supabaseUrl: "https://etdtijvlguuxqvehpdvn.supabase.co",
   tokenFn: "spotify-token",
   supabaseKey: "sb_publishable_TZeG7Ic79emzrJNfU7AzJg_zyRREfxb", // publishable key: safe in the repo (insert-only functions + RLS)
@@ -31,5 +31,5 @@ export const CONFIG = {
     O3: ["DIGI", "AUTO", "PHYS"], O4: ["DIGI", "PHYS", "AUTO"],
     O5: ["PHYS", "AUTO", "DIGI"], O6: ["PHYS", "DIGI", "AUTO"]
   },
-  dryrun: { baselineSeconds: 20, practiceFirstDelaySeconds: 4, practiceGapSeconds: 4, practiceTailSeconds: 3, postLastInterruptionSeconds: 10, interruptionDelaySeconds: [8, 12] }
+  dryrun: { baselineSeconds: 20, practiceSeconds: 10, rehearsalDelaySeconds: 4, postLastInterruptionSeconds: 10, interruptionDelaySeconds: [8, 12] }
 };

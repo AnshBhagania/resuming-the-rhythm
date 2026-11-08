@@ -23,7 +23,7 @@ js/content.js                   ALL participant-facing text (placeholders until 
 js/screens/*.js                 one module per screen (welcome ... done, plus gaze, music, inputTest)
 js/typing.js, passage.js        typing task engine, seeded passage generation
 js/interruption.js, resume.js   email pop-up and the AUTO / DIGI / PHYS resumption
-js/runner.js                    typing with scheduled interruptions (practice and study blocks)
+js/runner.js                    typing with scheduled interruptions (study blocks, incl. one flagged rehearsal each)
 js/audio.js, sound.js           audio backends (Spotify, silent synthetic) and the notification beep
 js/input.js                     physical resume input adapters (key, gamepad, media)
 js/gaze.js, gazeScore.js        eye tracking (WebGazer, mouse test source) and validation scoring

@@ -5,5 +5,6 @@ export function render(root, api) {
   mount(root, screen(`${c.title} (${block} of ${api.cfg.blocks})`,
     el("p", {}, c.body),
     el("p", {}, api.content.modes[condition].replace("[button]", api.cfg.physical.label)),
+    api.cfg.rehearsalPerBlock ? el("p", { class: "note" }, c.rehearsalNote) : null,
     continueBtn(api.next)));
 }

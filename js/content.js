@@ -106,13 +106,17 @@ export const CONTENT = {
 
   practice: {
     title: "Practice",
-    body: "[PLACEHOLDER] Practice round (typing plus one practice interruption per mode).",
-    note: "Three short interruptions, one per way of resuming the music ({modes})."
+    body: "[PLACEHOLDER] Practice round: just type. Nothing will interrupt you yet.",
+    durationNote: "Duration: {s} s."
   },
 
   baseline: { title: "Baseline", body: "[PLACEHOLDER] Baseline typing, no interruptions.", durationNote: "Duration: {s} s." },
 
-  blockIntro: { title: "Next block", body: "[PLACEHOLDER] Block intro." },
+  blockIntro: {
+    title: "Next block",
+    body: "[PLACEHOLDER] Block intro.",
+    rehearsalNote: "[PLACEHOLDER] Shortly after you start there is one practice interruption, so you can try how the music comes back in this block. Then the real block follows."
+  },
   modes: {
     AUTO: "[PLACEHOLDER] In this block the music resumes by itself after you reply.",
     DIGI: "[PLACEHOLDER] In this block, click the on-screen button to resume the music.",

@@ -20,7 +20,7 @@ Combine them with `&`, e.g. `?pid=P07&k=KEY` for a real participant or `?pid=T01
 |---|---|---|---|
 | `debug` | `1` | Dark debug bar (step, order, seed, back, skip, download log), live speed and accuracy under the text box, outline of the text box, and `window.__rhythm` / `window.__typing` for scripts. Never shown to real participants unless you add it to their link. | yes |
 | `step` | number (1 to 21), a screen name (`baseline`), or `screen:block` (`typing:2`) | Starts directly on that screen instead of the welcome screen. **Only honoured together with `debug=1`.** Earlier screens are skipped, so what they set up (music choice, calibration) is missing: combine with `audio=synthetic` and `gaze=0`. The admin Tester tab builds these links. | yes (needs debug) |
-| `dryrun` | `1` | Short timings: baseline 20 s, first interruption after 4 s in practice and every 8 to 12 s in blocks, 10 s tail, whole session about 3 minutes. | yes |
+| `dryrun` | `1` | Short timings: baseline 20 s, practice 10 s, rehearsal after 4 s and then an interruption every 8 to 12 s in blocks, 10 s tail, whole session about 3 minutes. | yes |
 | `audio` | `synthetic` | Plays a silent test tone through the same code path instead of Spotify. Any other value means Spotify. | yes |
 | `sound` | `1` | Only with `audio=synthetic`: makes the test tone and the email beep audible. Default is silent. | yes (via `audio`) |
 | `gaze` | `0` | Turns eye tracking off for this run (no camera step). | no |
