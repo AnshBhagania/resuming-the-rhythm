@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spotify one-time setup</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 20px; }
+    input, textarea { width: 100%; font: 14px ui-monospace, Menlo, monospace; padding: 8px; box-sizing: border-box; }
+    button { font: inherit; padding: 8px 18px; margin-top: 8px; cursor: pointer; }
+    code { background: #eee; padding: 1px 5px; border-radius: 3px; }
+    .warn { background: #fff4d6; padding: 10px 14px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Spotify one-time setup</h1>
+  <p class="warn">Run this once, signed in as the study's Spotify <strong>Premium owner account</strong>. Everything happens in your browser: the token is shown here and sent nowhere. Never commit or share the refresh token.</p>
+
+  <div id="start">
+    <p>Redirect URI to register in the Spotify dashboard (exactly this):</p>
+    <p><code id="redirect"></code></p>
+    <label>Spotify app Client ID (public)<br><input id="cid" autocomplete="off" spellcheck="false"></label>
+    <button id="go">Authorize with Spotify</button>
+  </div>
+
+  <div id="result" hidden>
+    <h2>Refresh token</h2>
+    <p>Store this as the Supabase secret <code>SPOTIFY_REFRESH_TOKEN</code>, then close this page.</p>
+    <textarea id="rt" rows="4" readonly></textarea>
+    <button id="copy">Copy</button>
+  </div>
+  <p id="msg"></p>
+
+<script>
+const SCOPES = "streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state";
+const redirect = location.origin + location.pathname;
+document.getElementById("redirect").textContent = redirect;
+const $ = (id) => document.getElementById(id);
+const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const rand = (n) => b64url(crypto.getRandomValues(new Uint8Array(n)));
+
+$("cid").value = sessionStorage.getItem("sp_cid") || "";
+
+$("go").onclick = async () => {
+  const cid = $("cid").value.trim();
+  if (!cid) { $("msg").textContent = "Enter the Client ID first."; return; }
+  const verifier = rand(48), state = rand(12);
+  const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
+  sessionStorage.setItem("sp_cid", cid);
+  sessionStorage.setItem("sp_verifier", verifier);
+  sessionStorage.setItem("sp_state", state);
+  const p = new URLSearchParams({ client_id: cid, response_type: "code", redirect_uri: redirect, scope: SCOPES,
+    code_challenge_method: "S256", code_challenge: challenge, state, show_dialog: "true" });
+  location.href = "https://accounts.spotify.com/authorize?" + p;
+};
+
+(async function handleReturn() {
+  const q = new URLSearchParams(location.search);
+  if (q.get("error")) { $("msg").textContent = "Spotify returned: " + q.get("error"); return; }
+  const code = q.get("code");
+  if (!code) return;
+  if (q.get("state") !== sessionStorage.getItem("sp_state")) { $("msg").textContent = "State mismatch. Start again."; return; }
+  const res = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ client_id: sessionStorage.getItem("sp_cid"), grant_type: "authorization_code",
+      code, redirect_uri: redirect, code_verifier: sessionStorage.getItem("sp_verifier") })
+  });
+  const j = await res.json();
+  if (!res.ok || !j.refresh_token) { $("msg").textContent = "Token exchange failed: " + JSON.stringify(j); return; }
+  history.replaceState({}, "", redirect);
+  $("start").hidden = true;
+  $("result").hidden = false;
+  $("rt").value = j.refresh_token;
+  $("copy").onclick = () => navigator.clipboard.writeText(j.refresh_token).then(() => { $("msg").textContent = "Copied."; });
+  // Check the account really is Premium (required for the Web Playback SDK).
+  const me = await fetch("https://api.spotify.com/v1/me", { headers: { Authorization: "Bearer " + j.access_token } }).then(r => r.json());
+  $("msg").textContent = `Signed in as ${me.display_name || me.id}, product: ${me.product}${me.product === "premium" ? "" : "  <-- NOT premium, playback will fail"}`;
+})();
+</script>
+</body>
+</html>
