@@ -57,3 +57,21 @@ button.primary:disabled { opacity: .4; cursor: not-allowed; }
   color: #9f9;
   z-index: 1000;
 }
+
+body.has-debug #app { padding-top: 48px; }
+#debug-bar button { margin-left: 6px; font: inherit; background: #444; color: #fff; border: 0; border-radius: 3px; cursor: pointer; }
+.note { color: var(--muted); font-size: .9rem; }
+.status.ok { color: #2e7d32; }
+.status.bad { color: var(--error); }
+.check { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0; }
+.field { margin: 18px 0; }
+.field.row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.label { margin-bottom: 6px; }
+.radios { display: flex; gap: 14px; flex-wrap: wrap; }
+.radios label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.likert { display: flex; align-items: center; gap: 14px; }
+.likert .end { color: var(--muted); font-size: .85rem; min-width: 70px; }
+input.kb, input[type=number], select, textarea { font: inherit; padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; }
+textarea.wide { width: 100%; }
+.word { font-family: var(--mono); font-size: 1.2rem; }
+.screen button.primary { margin-top: 18px; }

@@ -1,41 +1,68 @@
 import { APP_VERSION } from "./config.js";
 import { CONTENT } from "./content.js";
-
-// Stage 0: static walk through empty screens. The real state machine arrives in stage 1 (js/session.js).
-const SCREENS = [
-  "welcome", "consent", "camera", "precheck", "instructions", "practice",
-  "baseline", "blockIntro", "typing", "questions", "debrief", "done"
-];
+import { createSession, createMachine, sessionStartData } from "./session.js";
+import { log, setContext, downloadLog } from "./log.js";
+import { el, screen, mount } from "./ui.js";
 
 const params = new URLSearchParams(location.search);
-const pid = params.get("pid") || "P00";
-const debug = params.get("debug") === "1";
-
-const app = document.getElementById("app");
+const root = document.getElementById("app");
 const debugBar = document.getElementById("debug-bar");
-let i = 0;
 
-function render() {
-  const name = SCREENS[i];
-  const c = CONTENT[name];
-  app.innerHTML = "";
-  const el = document.createElement("section");
-  el.className = "screen";
-  el.innerHTML = `<h1></h1><p></p>`;
-  el.querySelector("h1").textContent = c.title;
-  el.querySelector("p").textContent = c.body;
-  if (i < SCREENS.length - 1) {
-    const btn = document.createElement("button");
-    btn.className = "primary";
-    btn.textContent = "Continue";
-    btn.onclick = () => { i++; render(); };
-    el.appendChild(btn);
-  }
-  app.appendChild(el);
-  if (debug) {
-    debugBar.hidden = false;
-    debugBar.textContent = `v${APP_VERSION} | pid=${pid} | screen=${name}`;
-  }
+function isMobile() {
+  const ua = navigator.userAgent;
+  if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true; // iPadOS desktop UA
+  return matchMedia("(pointer: coarse)").matches && !matchMedia("(hover: hover)").matches;
 }
 
-render();
+function boot() {
+  if (isMobile()) {
+    mount(root, screen(CONTENT.blocked.title, el("p", {}, CONTENT.blocked.body)));
+    return;
+  }
+
+  const rawPid = (params.get("pid") || "").trim();
+  const pidMissing = !/^[A-Za-z0-9_-]{1,16}$/.test(rawPid);
+  const pid = pidMissing ? "P00" : rawPid.toUpperCase();
+  const seedParam = params.get("seed");
+  const flags = {
+    debug: params.get("debug") === "1",
+    dryrun: params.get("dryrun") === "1",
+    order: params.get("order") ? params.get("order").toUpperCase() : null,
+    seed: seedParam && /^\d+$/.test(seedParam) ? Number(seedParam) >>> 0 : null
+  };
+
+  const session = createSession({ pid, pidMissing, flags });
+  setContext({ session_id: session.id, pid });
+  log("session_start", sessionStartData(session));
+
+  // Page health
+  document.addEventListener("visibilitychange", () => log("visibility_change", { hidden: document.hidden }));
+  window.addEventListener("blur", () => log("blur"));
+  window.addEventListener("focus", () => log("focus"));
+
+  const machine = createMachine({ root, session, onState: (step, i, n) => updateDebug(session, step, i, n) });
+  if (flags.debug) setupDebug(session, machine);
+  machine.start();
+}
+
+function setupDebug(session, machine) {
+  debugBar.hidden = false;
+  document.body.classList.add("has-debug");
+  window.__rhythm = { session, machine, downloadLog };
+}
+
+function updateDebug(session, step, i, n) {
+  if (!session.flags.debug) return;
+  const f = session.flags;
+  debugBar.replaceChildren(
+    el("span", {}, `v${APP_VERSION} | ${session.pid} | ${session.order.code} (${session.conditions.join(">")}) | seed ${session.seed}` +
+      `${f.dryrun ? " | DRYRUN" : ""}${session.pidMissing ? " | NO PID" : ""} | `),
+    el("strong", {}, `${i + 1}/${n} ${step.screen}`),
+    el("span", {}, ` | phase=${step.phase} block=${step.block} cond=${step.condition ?? "-"} `),
+    el("button", { onclick: () => window.__rhythm.machine.go(i - 1) }, "‹ back"),
+    el("button", { onclick: () => window.__rhythm.machine.go(i + 1) }, "skip ›"),
+    el("button", { onclick: downloadLog }, "download log"));
+}
+
+boot();
