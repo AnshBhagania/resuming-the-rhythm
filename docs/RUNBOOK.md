@@ -13,18 +13,8 @@
 - Issues to look at afterwards (Sessions badges, **Issues** tab): `audio_error`, `interruption_timeout`, hidden tab, upload errors.
 - Backup: the last screen offers "Download backup (JSON)". Ask for it if the upload line says it did not finish.
 
-## URL flags (analysis excludes flagged sessions)
-| Flag | Effect |
-|---|---|
-| `debug=1` | debug bar (skip/back/download log), live speed, text-box outline |
-| `dryrun=1` | short timings: baseline 20 s, interruptions every 8 to 12 s, whole session about 3 min |
-| `order=O3` | force a mode order (logged) |
-| `seed=42` | replay the same passages and schedules |
-| `audio=synthetic` | silent test audio instead of Spotify (add `&sound=1` to hear it) |
-| `nodb=1` | do not upload anything |
-| `gaze=0` | skip eye tracking (no camera step) |
-| `gaze=mouse` | the mouse pointer stands in for gaze, for testing without a camera |
-| `gazetest=1` | only camera permission + calibration + validation, shows the error per point (admin page links to it) |
+## URL flags
+See `docs/FLAGS.md` for every parameter, what it does and which ones mark a session as test data.
 
 ## Local testing
 Serve the repo with any static server on **127.0.0.1** (not localhost; browsers cache modules aggressively there), e.g.

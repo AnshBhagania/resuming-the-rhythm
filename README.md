@@ -41,15 +41,8 @@ docs/                           RUNBOOK.md, TESTING.md, SPOTIFY.md
 `https://anshbhagania.github.io/resuming-the-rhythm/?pid=P07&k=<STUDY_KEY>` (generate links on the admin page).
 The mode order follows the participant number (P01 to O1 ... P06 to O6, P07 to O1 ...).
 
-| Flag | Effect |
-|---|---|
-| `debug=1` | debug bar (skip, back, download log), live speed, outlines |
-| `dryrun=1` | short timings, whole session about 3 minutes |
-| `order=O3`, `seed=42` | force an order, replay passages and schedules |
-| `audio=synthetic` | silent test audio instead of Spotify (`&sound=1` to hear it) |
-| `gaze=0`, `gaze=mouse` | no eye tracking, or the mouse stands in for gaze |
-| `gazetest=1`, `inputtest=1` | calibration test, physical button test (linked from admin Settings) |
-| `nodb=1` | do not upload anything |
+Main ones: `debug=1`, `dryrun=1` (3-minute session), `audio=synthetic` (silent test audio), `gaze=0` / `gaze=mouse`, `nodb=1`, `order=O3`, `seed=42`,
+and the test pages `gazetest=1` and `inputtest=1`. **Full list with exact behaviour: [`docs/FLAGS.md`](docs/FLAGS.md).**
 
 Flagged sessions (debug, dryrun, nodb, gazetest, inputtest) are excluded in analysis.
 
@@ -72,7 +65,8 @@ Supabase dashboard or MCP). Edge Functions are deployed from `supabase/functions
 - Admin access: Supabase Auth login whose email is in the `admin_emails` table.
 
 ## Documentation
-- `docs/RUNBOOK.md`: setting up and running sessions, URL flags, data fields.
+- `docs/RUNBOOK.md`: setting up and running sessions, data fields.
+- `docs/FLAGS.md`: every URL parameter and what it does.
 - `docs/TESTING.md`: everything that still needs a person, a real device or real Chrome.
 - `docs/SPOTIFY.md`: the Spotify account pool, constraints and terms-of-service note.
 
