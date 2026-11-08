@@ -167,28 +167,21 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
       })();
       return connectPromise;
     },
+    // Spotify (since 2024-11 / 2026) hides playlist CONTENTS for playlists the account does not own and hides
+    // Spotify-owned playlists entirely from the Web API. Playback does not depend on those reads, so: read the
+    // name if we can, otherwise accept the link and let playback prove it. The context repeats, so length is irrelevant.
     async loadPlaylist(url) {
       const m = /playlist[/:]([A-Za-z0-9]{22})/.exec(url);
       if (!m) throw new Error("Not a Spotify playlist link");
       const id = m[1];
-      let name = "(playlist)", total = 0, n = 0;
+      let name = null, unverified = false;
       const meta = await api(`/playlists/${id}?fields=name`);
-      if (!meta.ok) throw new Error("Could not read playlist (" + meta.status + "). It must be public and not made by Spotify.");
-      name = (await meta.json()).name;
-      for (const base of [`/playlists/${id}/items`, `/playlists/${id}/tracks`]) {
-        let next = `${base}?limit=100&fields=next,items(track(duration_ms))`, ok = true, t = 0, c = 0;
-        for (let page = 0; next && page < 5; page++) {
-          const r = await (next.startsWith("http") ? fetch(next, { headers: { Authorization: "Bearer " + await getToken() } }) : api(next));
-          if (!r.ok) { ok = false; break; }
-          const j = await r.json();
-          for (const it of j.items || []) { const tr = it.track || it.item; if (tr?.duration_ms) { t += tr.duration_ms; c++; } }
-          next = j.next;
-        }
-        if (ok) { total = t; n = c; break; }
-      }
+      if (meta.ok) name = (await meta.json()).name;
+      else if (meta.status === 404 || meta.status === 403) unverified = true;   // Spotify-owned or private: cannot be read
+      else throw new Error("Could not read playlist (" + meta.status + ")");
       playlistUri = "spotify:playlist:" + id;
       started = false;
-      return { name, total_ms: total, n_tracks: n, uri: playlistUri };
+      return { name: name || "Spotify playlist", total_ms: null, n_tracks: null, uri: playlistUri, unverified };
     },
     reset() { started = false; },
     release(keepalive = false) { clearInterval(heartbeat); heartbeat = null; return callBroker("release", keepalive).catch(() => {}); },

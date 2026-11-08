@@ -74,13 +74,13 @@ export const CONTENT = {
 
 CONTENT.music = {
   title: "Choose your music",
-  body: "[PLACEHOLDER] Paste a link to a public Spotify playlist you like to work to (at least 30 minutes). Playlists made by Spotify itself cannot be used.",
+  body: "[PLACEHOLDER] Paste a link to a Spotify playlist you like to work to. The music repeats when the playlist ends.",
   linkLabel: "Spotify playlist link",
   load: "Load playlist",
   test: "Play test sound",
   stop: "Stop",
   volume: "Set a comfortable volume, then continue. It will stay fixed during the study.",
-  tooShort: "This playlist is too short. Please choose one that is at least 30 minutes long."
+  unverified: "Spotify does not let us preview this playlist, so use the test sound below to check it plays."
 };
 CONTENT.resume = {
   digiButton: "Resume music",

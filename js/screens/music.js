@@ -23,10 +23,8 @@ export function render(root, api) {
 
   const finishLoad = (i) => {
     info = i;
-    const mins = Math.round(i.total_ms / 60000);
-    const long = mins >= cfg.minPlaylistMinutes;
-    msg.textContent = `${i.name} (${i.n_tracks} tracks, ${mins} min)` + (long ? "" : "  " + c.tooShort);
-    vol.disabled = false; testBtn.disabled = false; btn.disabled = !long;
+    msg.textContent = i.unverified ? `${i.name}. ${c.unverified}` : i.name;
+    vol.disabled = false; testBtn.disabled = false; btn.disabled = false;
   };
 
   const rows = [el("p", {}, c.body)];
