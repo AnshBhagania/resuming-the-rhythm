@@ -36,15 +36,18 @@ async function boot() {
     order: params.get("order") ? params.get("order").toUpperCase() : null,
     seed: seedParam && /^\d+$/.test(seedParam) ? Number(seedParam) >>> 0 : null,
     gazetest: params.get("gazetest") === "1",
+    inputtest: params.get("inputtest") === "1",
     gazeParam: params.get("gaze")   // "0" off, "mouse" test source
   };
 
   const session = createSession({ pid, pidMissing, flags });
   const remote = await loadSettings();                     // admin-editable settings (falls back to defaults after 2.5 s)
   session.cfg.gaze = { ...remote.gaze };
+  session.cfg.physical = { ...remote.physical };
   if (flags.gazeParam === "0") session.cfg.gaze.enabled = false;
+  if (flags.inputtest) session.cfg.gaze.enabled = false;
   if (flags.gazetest) { session.cfg.gaze.enabled = true; session.cfg.gaze.optional = false; }
-  session.settingsInfo = { source: remote.source, updated_at: remote.updated_at, error: remote.error ?? null, gaze: session.cfg.gaze };
+  session.settingsInfo = { source: remote.source, updated_at: remote.updated_at, error: remote.error ?? null, gaze: session.cfg.gaze, physical: session.cfg.physical };
   session.gaze = session.cfg.gaze.enabled ? createGaze({ kind: flags.gazeParam === "mouse" ? "mouse" : "webgazer", cfg: session.cfg }) : null;
   session.studyKey = params.get("k") || "";
   const synthetic = params.get("audio") === "synthetic";

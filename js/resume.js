@@ -4,6 +4,7 @@ import { el } from "./ui.js";
 import { log } from "./log.js";
 import { BOX } from "./typing.js";
 import { meanOfRecent } from "./gaze.js";
+import { createPhysicalSource } from "./input.js";
 
 const MIN_GAP_BELOW_BOX = 250;
 
@@ -32,21 +33,23 @@ export async function runResumption({ mode, task, audio, cfg, content, n, practi
   const top = Math.round(boxRect.bottom + MIN_GAP_BELOW_BOX);
   const prompt = mode === "DIGI"
     ? el("button", { class: "resume-prompt resume-btn", type: "button" }, content.resume.digiButton)
-    : el("div", { class: "resume-prompt resume-card" }, content.resume.physPrompt);
+    : el("div", { class: "resume-prompt resume-card" }, content.resume.physPrompt.replace("[button]", cfg.physical.label));
   prompt.style.top = top + "px";
   document.body.append(prompt);
   if (mode === "DIGI") prompt.blur();
 
+  const physical = createPhysicalSource(cfg.physical);
   const inputResult = new Promise((resolve) => {
+    let stopDevice = null;
     const stop = listenWrongInputs({
       mode, cfg, base, prompt,
       valid: (e) => {
         if (mode === "DIGI" && e.type === "click" && prompt.contains(e.target)) return { source: "mouse_click" };
-        if (mode === "PHYS" && e.type === "keydown" && e.key === cfg.physicalPlaceholderKey && !e.repeat) return { source: "placeholder_key", key: e.key };
+        if (mode === "PHYS") return physical.keyMatches(e) || false;
         return false;
       },
       onValid: (e, info) => {
-        stop(); log("resume_input", { ...base, ...info }, e.timeStamp);
+        stop(); stopDevice?.(); log("resume_input", { ...base, ...info }, e.timeStamp);
         if (gaze && mode === "DIGI") {   // free accuracy check: people look at the button as they click it
           const m = meanOfRecent(gaze.recent(10)), r = prompt.getBoundingClientRect();
           if (m) log("gaze_click_check", { ...base, gaze_x: Math.round(m.x), gaze_y: Math.round(m.y), n: m.n,
@@ -55,6 +58,9 @@ export async function runResumption({ mode, task, audio, cfg, content, n, practi
         resolve();
       }
     });
+    if (mode === "PHYS" && physical.type !== "key") {      // gamepad / media devices arrive outside the keydown stream
+      stopDevice = physical.start((info) => { stop(); stopDevice?.(); log("resume_input", { ...base, ...info }, info.t); resolve(); });
+    }
   });
 
   const rect = prompt.getBoundingClientRect();   // measured synchronously; logged on the first painted frame (or 50 ms, whichever is first)
@@ -84,9 +90,10 @@ function listenWrongInputs({ mode, cfg, base, prompt, valid, onValid }) {
     const v = valid(e);
     if (v) { e.preventDefault(); e.stopPropagation(); onValid?.(e, v); return; }
     e.preventDefault();
+    const physKey = cfg.physical.type === "key" ? cfg.physical.key : null;
     const kind = e.type === "click"
       ? (prompt && prompt.contains(e.target) ? "click_on_card" : "click_elsewhere")
-      : (e.key === cfg.physicalPlaceholderKey ? "physical_key" : "keyboard");
+      : (physKey && e.key === physKey ? "physical_key" : "keyboard");
     if (mode === "DIGI" && e.type === "click" && !prompt?.contains(e.target)) return;  // stray clicks are not errors in DIGI
     log("wrong_input", { ...base, kind, key: e.type === "keydown" ? e.key : null }, e.timeStamp);
   };

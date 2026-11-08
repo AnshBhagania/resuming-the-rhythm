@@ -131,6 +131,15 @@
         </div>
       </div>
       <div class="card">
+        <h3 style="margin-top:0">Physical resume button</h3>
+        <p class="muted">What counts as "pressing the button" in the PHYS condition. The device is still undecided: use the test page to see what a candidate device sends,
+        then set it here. Saved together with the eye-tracking settings above.</p>
+        <div id="physForm" class="settingsGrid"></div>
+        <div class="row" style="margin-top:12px">
+          <a class="btn" id="inputTestLink" target="_blank" rel="noopener">Open physical button test (20 presses)</a>
+        </div>
+      </div>
+      <div class="card">
         <h3 style="margin-top:0">Test calibration</h3>
         <p class="muted">Runs only the camera permission, calibration and validation, with the current saved settings, and shows the error per point. Use it on the pilot laptops.
         The result is also saved as a session flagged <code>gazetest</code>.</p>
@@ -381,6 +390,21 @@ const GAZE_FIELDS = [
 ];
 const GAZE_DEFAULTS = { enabled: true, optional: true, gridCols: 3, gridRows: 3, clicksPerPoint: 5, validationDwellMs: 2500, validationSettleMs: 1000, maxErrorPx: 250, maxAttempts: 3, sampleCapHz: 30 };
 let currentSettings = {};
+const PHYS_DEFAULTS = { type: "key", key: "F9", gamepadButton: -1, mediaAction: "any", label: "button" };
+function renderPhysForm(p) {
+  const field = (label, input) => el("label", {}, el("span", { textContent: label }), input);
+  const sel = (id, opts, val) => { const s = el("select", { id }); opts.forEach(o => s.append(el("option", { value: o, textContent: o, selected: o === val }))); return s; };
+  $("physForm").replaceChildren(
+    field("Device type", sel("ph_type", ["key", "gamepad", "media"], p.type)),
+    field("Key (type: key), e.g. F9, Enter, p", el("input", { id: "ph_key", value: p.key, maxLength: 20, size: 10 })),
+    field("Gamepad button (-1 = any)", el("input", { id: "ph_gamepadButton", type: "number", value: p.gamepadButton, min: -1, max: 31 })),
+    field("Media action (type: media)", sel("ph_mediaAction", ["any", "play", "pause", "nexttrack", "previoustrack", "stop"], p.mediaAction)),
+    field("Name shown to participants", el("input", { id: "ph_label", value: p.label, maxLength: 30, size: 16 })));
+}
+function readPhysForm() {
+  return { type: $("ph_type").value, key: $("ph_key").value || PHYS_DEFAULTS.key, gamepadButton: Math.max(-1, Math.min(31, Math.round(+$("ph_gamepadButton").value || -1))),
+    mediaAction: $("ph_mediaAction").value, label: $("ph_label").value.trim() || PHYS_DEFAULTS.label };
+}
 function renderGazeForm(g) {
   $("gazeForm").replaceChildren(...GAZE_FIELDS.map(([key, label, type, range]) => {
     const input = el("input", { type: type === "bool" ? "checkbox" : "number", id: "gz_" + key });
@@ -393,6 +417,8 @@ async function loadSettings() {
   if (error) { say("Could not load settings: " + error.message, true); return; }
   currentSettings = data.settings || {};
   renderGazeForm({ ...GAZE_DEFAULTS, ...(currentSettings.gaze || {}) });
+  renderPhysForm({ ...PHYS_DEFAULTS, ...(currentSettings.physical || {}) });
+  $("inputTestLink").href = SITE + "?pid=CAL&inputtest=1";
   $("settingsInfo").textContent = data.updated_at ? `Last saved ${fmt(data.updated_at)} by ${data.updated_by || "?"}` : "";
   $("calReal").href = SITE + "?pid=CAL&gazetest=1";
   $("calMouse").href = SITE + "?pid=CAL&gazetest=1&gaze=mouse";
@@ -406,12 +432,12 @@ function readGazeForm() {
   return g;
 }
 $("saveSettings").onclick = async () => {
-  const settings = { ...currentSettings, gaze: readGazeForm() };
+  const settings = { ...currentSettings, gaze: readGazeForm(), physical: readPhysForm() };
   const { error } = await sb.from("study_settings").update({ settings }).eq("id", 1);
   if (error) { say("Save failed: " + error.message, true); return; }
   say("Settings saved. New sessions will use them."); loadSettings();
 };
-$("resetSettings").onclick = () => renderGazeForm(GAZE_DEFAULTS);
+$("resetSettings").onclick = () => { renderGazeForm(GAZE_DEFAULTS); renderPhysForm(PHYS_DEFAULTS); };
 
 // ---------- participant links ----------
 const ORDERS = { O1: "AUTO DIGI PHYS", O2: "AUTO PHYS DIGI", O3: "DIGI AUTO PHYS", O4: "DIGI PHYS AUTO", O5: "PHYS AUTO DIGI", O6: "PHYS DIGI AUTO" };

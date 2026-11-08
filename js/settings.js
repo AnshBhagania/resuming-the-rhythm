@@ -20,6 +20,17 @@ export function sanitizeGaze(raw = {}) {
   };
 }
 
+export function sanitizePhysical(raw = {}) {
+  const d = CONFIG.physical;
+  return {
+    type: ["key", "gamepad", "media"].includes(raw.type) ? raw.type : d.type,
+    key: typeof raw.key === "string" && raw.key.length >= 1 && raw.key.length <= 20 ? raw.key : d.key,
+    gamepadButton: Math.round(clamp(raw.gamepadButton, -1, 31, d.gamepadButton)),
+    mediaAction: ["any", "play", "pause", "nexttrack", "previoustrack", "stop"].includes(raw.mediaAction) ? raw.mediaAction : d.mediaAction,
+    label: typeof raw.label === "string" && raw.label.trim() && raw.label.length <= 30 ? raw.label.trim() : d.label
+  };
+}
+
 export async function loadSettings() {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 2500);
@@ -29,8 +40,8 @@ export async function loadSettings() {
     });
     if (!r.ok) throw new Error("HTTP " + r.status);
     const j = await r.json();
-    return { source: "db", updated_at: j?.updated_at ?? null, gaze: sanitizeGaze(j?.settings?.gaze) };
+    return { source: "db", updated_at: j?.updated_at ?? null, gaze: sanitizeGaze(j?.settings?.gaze), physical: sanitizePhysical(j?.settings?.physical) };
   } catch (e) {
-    return { source: "default", error: String(e.message || e), updated_at: null, gaze: sanitizeGaze({}) };
+    return { source: "default", error: String(e.message || e), updated_at: null, gaze: sanitizeGaze({}), physical: sanitizePhysical({}) };
   } finally { clearTimeout(timer); }
 }

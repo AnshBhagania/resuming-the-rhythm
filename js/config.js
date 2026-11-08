@@ -22,8 +22,9 @@ export const CONFIG = {
   spotifyClientId: "7bb2a29fb58e49989c6e0ffe11162254",           // public
   leaseHeartbeatMs: 45000,
   // Defaults for eye tracking; the admin page can override these (see settings.js, table study_settings).
+  // Physical resume input (device undecided): key | gamepad | media. Admin-editable. F9 is a placeholder.
+  physical: { type: "key", key: "F9", gamepadButton: -1, mediaAction: "any", label: "button" },
   gaze: { enabled: true, optional: true, gridCols: 3, gridRows: 3, clicksPerPoint: 5, validationDwellMs: 2500, validationSettleMs: 1000, maxErrorPx: 250, maxAttempts: 3, sampleCapHz: 30 },
-  physicalPlaceholderKey: "F9",
   flushIntervalMs: 2000,
   flushMaxEvents: 200,
   minScreen: { w: 1280, h: 720 },

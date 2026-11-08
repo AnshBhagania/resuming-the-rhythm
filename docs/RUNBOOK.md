@@ -41,6 +41,14 @@ Serve the repo with any static server on **127.0.0.1** (not localhost; browsers 
 - Expect roughly 100 to 250 px error with a webcam, if the participant keeps still. Pilot it: if the validation error is often above the limit,
   raise the limit or enlarge the areas of interest in analysis.
 
+## Physical button
+Admin **Settings** tab, "Physical resume button": device type (`key`, `gamepad`, `media`), the key or button, and the name participants see
+("Press the [name] to resume music"). Use the **physical button test** (also `?pid=CAL&inputtest=1`) to see what a device sends and to check 20 of 20 presses.
+Anything that types a key works with type `key`. The default F9 is only a placeholder (on Macs F-keys are media keys unless Fn is held).
+
+## Testing checklist
+See `docs/TESTING.md` for everything that still needs a person, a real device or real Chrome.
+
 ## Data
 - Tables: `sessions`, `events` (see `supabase/migrations/`). Export from the admin page (JSON or CSV per session) or from the Supabase
   dashboard / SQL editor. Test rows have pid `TEST`, `T01`, `T02` or flags debug / dryrun.

@@ -73,6 +73,10 @@ export function sessionStartData(session) {
 export function buildSteps(conditions, flags = {}) {
   const steps = [];
   const add = (screen, phase, extra = {}) => steps.push({ screen, phase, block: 0, condition: null, ...extra });
+  if (flags.inputtest) {           // physical button test only (opened from the admin page)
+    add("inputTest", "precheck"); add("done", "debrief");
+    return steps;
+  }
   if (flags.gazetest) {            // calibration test only (opened from the admin page)
     add("camera", "consent"); add("gaze", "precheck"); add("done", "debrief");
     return steps;
