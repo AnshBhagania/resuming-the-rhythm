@@ -96,3 +96,25 @@ textarea.wide { width: 100%; }
 .tw-end.tw-caret { box-shadow: 2px 0 0 var(--accent); }
 .tw-hint { color: var(--muted); margin: 0; }
 .tw-debug { font: 12px var(--mono); color: var(--muted); margin: 0; }
+
+/* ---- email interruption ---- */
+.email-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 50; pointer-events: none; }
+.email-card {
+  pointer-events: auto; width: 640px; max-width: calc(100vw - 48px); background: var(--card); border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.22); padding: 22px 28px; animation: em-in .22s ease-out;
+}
+@keyframes em-in { from { transform: translateY(28px); opacity: 0; } to { transform: none; opacity: 1; } }
+.email-card.em-reminder { outline: 3px solid #f0a000; }
+.em-head { border-bottom: 1px solid #e4e4e4; padding-bottom: 8px; margin-bottom: 10px; }
+.em-from { font-size: .85rem; color: var(--muted); }
+.em-subject { font-weight: 600; font-size: 1.1rem; }
+.em-body { margin: 0 0 10px; }
+.em-question { font-weight: 600; margin: 0 0 6px; }
+.em-opts { list-style: none; margin: 0 0 10px; padding: 0; }
+.em-opt { display: flex; gap: 10px; align-items: center; padding: 4px 8px; border-radius: 6px; }
+.em-opt.sel { background: #e8eefc; }
+kbd { font: 13px var(--mono); border: 1px solid #bbb; border-bottom-width: 2px; border-radius: 4px; padding: 0 6px; background: #fafafa; }
+.em-reply { border: 1px solid #bbb; border-radius: 6px; padding: 8px 10px; font: 16px var(--mono); min-height: 40px; word-break: break-all; }
+.em-caret { display: inline-block; width: 2px; height: 1.1em; background: var(--accent); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.em-hint { margin: 8px 0 0; font-size: .85rem; color: var(--muted); }

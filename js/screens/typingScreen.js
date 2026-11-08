@@ -3,21 +3,21 @@ import { el, screen, mount, continueBtn } from "../ui.js";
 import { loadWords, generatePassage } from "../passage.js";
 import { createTypingTask } from "../typing.js";
 
-export async function runTypingScreen(root, api, { label, seed, seconds, onEnd }) {
+export async function runTypingScreen(root, api, { label, seed, seconds, onEnd, onStart, debugExtra, nWords = 400 }) {
   mount(root, screen("Loading...", el("p", {}, "")));
   let pool;
   try {
     pool = await loadWords();
   } catch (e) {
     mount(root, screen("Could not load", el("p", {}, "The word list failed to load. Check your connection and try again."),
-      continueBtn(() => runTypingScreen(root, api, { label, seed, seconds, onEnd }), "Retry")));
+      continueBtn(() => runTypingScreen(root, api, { label, seed, seconds, onEnd, onStart, debugExtra, nWords }), "Retry")));
     return;
   }
-  const passage = generatePassage(pool, seed);
+  const passage = generatePassage(pool, seed, { n: nWords });
   const task = createTypingTask({
-    parent: root, passage, seconds, label, debug: api.session.flags.debug,
+    parent: root, passage, seconds, label, debug: api.session.flags.debug, onStart, debugExtra,
     onEnd: (reason) => {
-      if (onEnd) { onEnd(reason, task); return; }
+      onEnd?.(reason);   // hook (e.g. clear timers); the finished card always follows
       const c = api.content.typingDone;
       mount(root, screen(c.title, el("p", {}, c.body), continueBtn(api.next)));
     }

@@ -5,7 +5,8 @@ export const CONFIG = {
   practiceSeconds: 60,
   blocks: 3,
   interruptionsPerBlock: 4,
-  blockPlaceholderSeconds: 30, // stage 2 only: block typing length until interruptions (stage 3) define it
+  postLastInterruptionSeconds: 60, // typing continues this long after the last interruption so recovery can be measured
+  blockPassageWords: 800,
   interruptionDelaySeconds: [45, 75],
   emailTimeoutSeconds: 60,
   replyMinWords: 3,
@@ -19,5 +20,5 @@ export const CONFIG = {
     O3: ["DIGI", "AUTO", "PHYS"], O4: ["DIGI", "PHYS", "AUTO"],
     O5: ["PHYS", "AUTO", "DIGI"], O6: ["PHYS", "DIGI", "AUTO"]
   },
-  dryrun: { baselineSeconds: 20, practiceSeconds: 10, blockPlaceholderSeconds: 10, interruptionDelaySeconds: [8, 12] }
+  dryrun: { baselineSeconds: 20, practiceSeconds: 10, postLastInterruptionSeconds: 10, interruptionDelaySeconds: [8, 12] }
 };

@@ -10,7 +10,7 @@ const IDLE_MS = 10000;
 const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock", "AltGraph", "Fn", "FnLock",
   "NumLock", "ScrollLock", "OS", "Hyper", "Super", "Dead", "Process", "Unidentified", "Compose"]);
 
-export function createTypingTask({ parent, passage, seconds, label, debug = false, onEnd }) {
+export function createTypingTask({ parent, passage, seconds, label, debug = false, onEnd, onStart, debugExtra }) {
   const words = passage.words;
   const wordEls = [];
   const typedFinal = new Array(words.length).fill(null);
@@ -88,6 +88,7 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
     startT = t;
     hint.hidden = true;
     log("typing_start", { label, passage_id: passage.id, seconds }, t);
+    onStart?.(t);
     endTimer = setTimeout(() => finish("time"), Math.max(0, seconds * 1000 - (performance.now() - t)));
   }
 
@@ -202,7 +203,7 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
       const el_s = (performance.now() - startT) / 1000;
       const wpm = (goodChars / 5) / (el_s / 60);
       const acc = printable ? (printableCorrect / printable * 100) : 100;
-      dbg.textContent = `debug: ${el_s.toFixed(0)}/${seconds}s | words ${wordsDone} | net ${wpm.toFixed(0)} wpm | key acc ${acc.toFixed(1)}%${locked ? " | LOCKED " + lockReason : ""}`;
+      dbg.textContent = `debug: ${el_s.toFixed(0)}/${seconds}s | words ${wordsDone} | net ${wpm.toFixed(0)} wpm | key acc ${acc.toFixed(1)}%${locked ? " | LOCKED " + lockReason : ""}${debugExtra ? " | " + debugExtra() : ""}`;
     }, 250);
   }
 
@@ -223,7 +224,7 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
     },
     markInterruption() { if (typed.length > 0) wordStraddled = true; },
     stop(reason = "stopped") { finish(reason); },
-    getState: () => ({ idx, typed, started, ended, locked, lastKeyT, lastErrorT, startT, wordsDone }),
+    getState: () => ({ idx, target: words[idx], typed, started, ended, locked, lastKeyT, lastErrorT, startT, wordsDone }),
     box, wrap
   };
 }
