@@ -113,7 +113,7 @@
           <button class="btn" id="copyAll">Copy all</button>
         </div>
         <p class="muted">One link per participant. The mode order is assigned from the number (P01 = O1 ... P06 = O6, P07 = O1 ...), so each of the 6 orders is used evenly.
-        The study key is only used to build the links in your browser and is not sent anywhere.</p>
+        The study key is only used to build the links in your browser (remembered in this browser) and is not sent anywhere.</p>
         <table><thead><tr><th>Participant</th><th>Order</th><th>Link</th><th></th></tr></thead><tbody id="linkRows"></tbody></table>
       </div>
     </section>
@@ -443,8 +443,10 @@ $("resetSettings").onclick = () => { renderGazeForm(GAZE_DEFAULTS); renderPhysFo
 const ORDERS = { O1: "AUTO DIGI PHYS", O2: "AUTO PHYS DIGI", O3: "DIGI AUTO PHYS", O4: "DIGI PHYS AUTO", O5: "PHYS AUTO DIGI", O6: "PHYS DIGI AUTO" };
 const SITE = location.origin + location.pathname.replace(/admin\/?$/, "");
 let generated = [];
+try { $("linkKey").value = localStorage.getItem("studyKeyAdmin") || ""; } catch (e) { /* storage blocked */ }
 $("genLinks").onclick = () => {
   const key = $("linkKey").value.trim();
+  try { if (key) localStorage.setItem("studyKeyAdmin", key); } catch (e) { /* storage blocked */ }
   const from = Math.max(1, +$("linkFrom").value || 1), to = Math.min(99, +$("linkTo").value || from);
   if (!key) { say("Paste the study key first.", true); return; }
   say("");

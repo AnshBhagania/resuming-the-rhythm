@@ -8,6 +8,16 @@ import { el } from "./ui.js";
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+// Researchers signed in to the admin page in this browser do not need the study key: their login token (same origin, shared localStorage)
+// is sent instead and checked by the token function. Participants never have one.
+export function adminToken() {
+  try {
+    const raw = localStorage.getItem("sb-etdtijvlguuxqvehpdvn-auth-token");
+    const t = raw ? JSON.parse(raw) : null;
+    return t?.access_token && t.expires_at * 1000 > Date.now() + 30_000 ? t.access_token : null;
+  } catch (e) { return null; }
+}
+
 export function createAudio({ kind, cfg, pid, studyKey, sessionId, silent = false }) {
   const impl = kind === "synthetic" ? syntheticImpl({ silent }) : spotifyImpl({ cfg, pid, studyKey, sessionId });
   const status = el("div", { id: "music-status", class: "music-status" }, "♪ paused");
@@ -29,6 +39,7 @@ export function createAudio({ kind, cfg, pid, studyKey, sessionId, silent = fals
     reset: () => impl.reset(),
     release: (keepalive) => impl.release?.(keepalive),
     setStudyKey: (k) => impl.setStudyKey?.(k),
+    hasAdminLogin: () => !!adminToken(),
 
     // Resolves when the backend reports actual playback (or after the timeout, flagged).
     async play({ reason = "", fadeMs = cfg.musicFadeInMs } = {}) {
@@ -101,8 +112,9 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
 
   let heartbeat = null, accountLabel = null;
   async function callBroker(action, keepalive = false) {
+    const admin = adminToken();
     return fetch(`${cfg.supabaseUrl}/functions/v1/${cfg.tokenFn}`, {
-      method: "POST", keepalive, headers: { "Content-Type": "application/json" },
+      method: "POST", keepalive, headers: { "Content-Type": "application/json", ...(admin ? { Authorization: "Bearer " + admin } : {}) },
       body: JSON.stringify({ action, key: studyKey, pid, session_id: sessionId })
     });
   }

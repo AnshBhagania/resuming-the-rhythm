@@ -31,11 +31,11 @@ export function render(root, api) {
   if (audio.kind === "spotify") {
     const input = el("input", { type: "text", placeholder: "https://open.spotify.com/playlist/...", spellcheck: "false", autocomplete: "off" });
     // Debug runs can paste the key here when the link had none; real participants never see this field.
-    const keyInput = api.session.flags.debug && !api.session.studyKey ? el("input", { type: "text", placeholder: c.keyPlaceholder, spellcheck: "false", autocomplete: "off" }) : null;
+    const keyInput = api.session.flags.debug && !api.session.studyKey && !audio.hasAdminLogin() ? el("input", { type: "text", placeholder: c.keyPlaceholder, spellcheck: "false", autocomplete: "off" }) : null;
     const load = el("button", { class: "primary", onclick: async () => {
       if (!api.session.studyKey && keyInput?.value.trim()) { api.session.studyKey = keyInput.value.trim(); audio.setStudyKey(api.session.studyKey);
         try { sessionStorage.setItem("studyKey", api.session.studyKey); } catch (e) { /* storage blocked */ } }
-      if (!api.session.studyKey) {
+      if (!api.session.studyKey && !audio.hasAdminLogin()) {
         msg.textContent = c.missingKey;
         log("audio_error", { kind: "missing_key" });
         return;

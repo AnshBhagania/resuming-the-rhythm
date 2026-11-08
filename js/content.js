@@ -61,7 +61,7 @@ export const CONTENT = {
     volume: "Set a comfortable volume, then continue. It will stay fixed during the study.",
     connecting: "Connecting to Spotify...",
     unverified: "Spotify does not let us preview this playlist, so use the test sound below to check it plays.",
-    missingKey: "This link is missing its access key. Please ask the researcher for a new link.",
+    missingKey: "This link is missing its access key. Please ask the researcher for a new link. (Researchers: sign in to the admin page in this browser, then reload.)",
     keyPlaceholder: "Study key (shown in debug runs only)",
     allBusy: "All Spotify accounts are in use by other sessions. Retrying automatically in 10 s...",
     syntheticNote: "Synthetic audio (test mode)."

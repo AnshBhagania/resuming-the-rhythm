@@ -5,7 +5,7 @@
 // POST { action: "token" | "release", key, pid, session_id }
 //   token   -> { access_token, expires_in, account: { label } }  | 409 { error: "no_free_account" }
 //   release -> { ok: true }
-// Deployed with verify_jwt = false. Gate: Origin allow-list + STUDY_KEY secret.
+// Deployed with verify_jwt = false. Gate: Origin allow-list + (STUDY_KEY from the link OR a signed-in admin's login token).
 
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -22,6 +22,17 @@ const rest = (path: string, init: RequestInit = {}) =>
     headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, "Content-Type": "application/json", ...(init.headers ?? {}) },
   });
 
+async function isAdmin(req: Request): Promise<boolean> {
+  const auth = req.headers.get("authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return false;
+  const u = await fetch(`${SB_URL}/auth/v1/user`, { headers: { apikey: SERVICE, Authorization: auth } });
+  if (!u.ok) return false;
+  const email = ((await u.json()).email ?? "").toLowerCase();
+  if (!email) return false;
+  const adm = await (await rest(`admin_emails?email=eq.${encodeURIComponent(email)}&select=email`)).json();
+  return Array.isArray(adm) && adm.length > 0;
+}
+
 const json = (body: unknown, status: number, cors: Record<string, string>) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" } });
 
@@ -36,10 +47,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (req.method !== "POST") return json({ error: "method" }, 405, cors);
   if (!ALLOWED.includes(origin)) return json({ error: "origin" }, 403, cors);
-  if (!studyKey()) return json({ error: "not_configured" }, 500, cors);
-
   const body = await req.json().catch(() => ({}));
-  if (body.key !== studyKey()) return json({ error: "key" }, 401, cors);
+  // Allowed: a link carrying the study key, OR a signed-in admin (their login token is sent automatically by the app).
+  const keyOk = !!studyKey() && body.key === studyKey();
+  if (!keyOk && !(await isAdmin(req))) {
+    return json({ error: studyKey() ? "key" : "not_configured" }, studyKey() ? 401 : 500, cors);
+  }
   if (!/^[A-Za-z0-9_-]{1,16}$/.test(body.pid ?? "")) return json({ error: "pid" }, 400, cors);
   if (!/^[0-9a-f-]{36}$/i.test(body.session_id ?? "")) return json({ error: "session_id" }, 400, cors);
   const session = body.session_id as string;
