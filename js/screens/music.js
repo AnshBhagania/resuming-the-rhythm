@@ -60,7 +60,7 @@ export function render(root, api) {
         else msg.textContent = c.connectFailed + " (" + String(e.message || e) + ")";
       }
     } }, c.load);
-    rows.push(el("label", {}, c.linkLabel), el("div", { class: "fieldrow" }, input, load));
+    rows.push(el("label", { class: "plain" }, c.linkLabel), el("div", { class: "fieldrow" }, input, load));
     if (keyInput) rows.push(el("div", { class: "fieldrow" }, keyInput));
   } else {
     rows.push(el("p", { class: "note" }, c.syntheticNote));

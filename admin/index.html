@@ -6,15 +6,15 @@
   <meta name="robots" content="noindex">
   <title>Study admin</title>
   <style>
-    :root { --bg:#f6f6f4; --fg:#1d1d1f; --muted:#6e6e73; --card:#fff; --line:#e3e3e0; --accent:#2f5bd3; --bad:#c62828; --warn:#b26a00; --ok:#2e7d32; }
-    @media (prefers-color-scheme: dark) { :root { --bg:#17171a; --fg:#eaeaea; --muted:#9a9aa0; --card:#222226; --line:#34343a; --accent:#7ea2ff; --bad:#ff7b72; --warn:#e3a008; --ok:#56d364; } }
+    :root { --bg:#f6f6f4; --fg:#1d1d1f; --muted:#6e6e73; --card:#fff; --line:#e3e3e0; --accent:#2f5bd3; --bad:#c62828; --warn:#9a5b00; --ok:#2e7d32; --on-accent:#ffffff; --field:#8a8a93; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#17171a; --fg:#eaeaea; --muted:#9a9aa0; --card:#222226; --line:#34343a; --accent:#7ea2ff; --bad:#ff7b72; --warn:#e3a008; --ok:#56d364; --on-accent:#0b1020; --field:#7b7b86; } }
     * { box-sizing: border-box; }
     body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui,-apple-system,sans-serif; }
     header { display:flex; align-items:center; gap:16px; padding:10px 20px; background:var(--card); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
     header h1 { font-size:16px; margin:0; }
     nav { display:flex; gap:4px; }
     nav button { border:0; background:none; padding:6px 12px; border-radius:6px; cursor:pointer; color:var(--muted); font:inherit; }
-    nav button.on { background:var(--accent); color:#fff; }
+    nav button.on { background:var(--accent); color:var(--on-accent); }
     .spacer { flex:1; }
     main { padding:20px; max-width:1300px; margin:0 auto; }
     .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
@@ -23,11 +23,14 @@
     th { color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap; }
     tr.click { cursor:pointer; } tr.click:hover { background:rgba(127,127,127,.08); }
     .badge { display:inline-block; padding:1px 7px; border-radius:10px; font-size:12px; margin-right:4px; background:rgba(127,127,127,.18); }
-    .badge.bad { background:var(--bad); color:#fff; } .badge.warn { background:var(--warn); color:#fff; } .badge.ok { background:var(--ok); color:#fff; }
-    button.btn { font:inherit; padding:5px 12px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--fg); cursor:pointer; }
-    button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .badge.bad { background:var(--bad); color:var(--on-accent); } .badge.warn { background:var(--warn); color:var(--on-accent); } .badge.ok { background:var(--ok); color:var(--on-accent); }
+    .btn { font:inherit; padding:5px 12px; border-radius:6px; border:1px solid var(--field); background:var(--card); color:var(--fg); cursor:pointer; }
+    .btn:hover { border-color:var(--accent); }
+    .btn.primary, button.primary { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+    a { color:var(--accent); }
     button.danger { color:var(--bad); }
-    input, select { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--fg); }
+    input::placeholder { color:var(--muted); opacity:1; }
+    input, select { font:inherit; padding:5px 8px; border:1px solid var(--field); border-radius:6px; background:var(--card); color:var(--fg); }
     .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
     .muted { color:var(--muted); } .mono { font:12px ui-monospace,Menlo,monospace; }
     .login { max-width:340px; margin:80px auto; }
@@ -39,7 +42,8 @@
     .settingsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px 24px; }
     .settingsGrid label { display:flex; justify-content:space-between; gap:10px; align-items:center; }
     .settingsGrid input[type=number] { width:90px; }
-    a.btn { text-decoration:none; display:inline-block; }
+    a.btn { text-decoration:none; display:inline-block; color:var(--fg); }
+    a.btn.primary { color:var(--on-accent); }
   </style>
 </head>
 <body>

@@ -122,6 +122,7 @@ export function createMachine({ root, session, onState }) {
   function go(n) {
     if (n < 0 || n >= steps.length) return;
     index = n;
+    document.body.classList.remove("typing-active");
     const step = steps[n];
     api.step = step;
     setContext({ phase: step.phase, block: step.block, condition: step.condition, intr: 0 });

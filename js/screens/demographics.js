@@ -14,7 +14,14 @@ export function render(root, api) {
   const rows = c.items.map(it => {
     let input;
     if (it.type === "number") {
-      input = el("input", { type: "number", min: "10", max: "100", oninput: (e) => { answers[it.id] = e.target.value; update(); } });
+      // digits only, no spinner arrows; 10 to 100 accepted
+      input = el("input", { type: "text", inputmode: "numeric", pattern: "[0-9]*", maxlength: "3", autocomplete: "off", class: "age", "aria-label": it.label,
+        oninput: (e) => {
+          e.target.value = e.target.value.replace(/\D/g, "").slice(0, 3);
+          const v = Number(e.target.value);
+          answers[it.id] = v >= 10 && v <= 100 ? String(v) : "";
+          update();
+        } });
     } else {
       const opts = it.type === "yesno" ? [api.content.ui.yes, api.content.ui.no] : it.options;
       input = radioGroup("d_" + it.id, opts.map(o => ({ value: o, label: o })), (v) => { answers[it.id] = v; update(); });

@@ -72,6 +72,8 @@ async function boot() {
   window.addEventListener("resize", () => log("window_resize", { w: innerWidth, h: innerHeight }));
   const machine = createMachine({ root, session, onState: (step, i, n) => {
     updateDebug(session, step, i, n);
+    const bar = document.querySelector("#progress div");
+    if (bar) bar.style.width = Math.round(((i + 1) / n) * 100) + "%";
     // Gaze is recorded only while the typing task is on screen.
     session.gaze?.setRecording(["practice", "baseline", "typing"].includes(step.screen) && (session.gazeState === "ready" || session.gazeState === "ready_low_accuracy"));
   } });

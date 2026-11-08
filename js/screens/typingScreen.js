@@ -19,9 +19,11 @@ export async function runTypingScreen(root, api, { label, seed, seconds, onEnd, 
   audio.showStatus(true);
   mount(root, screen(ui.getReady, el("p", {}, ui.startingMusic)));
   await audio.play({ reason: "phase_start_" + label });      // typing is locked until music is playing
+  document.body.classList.add("typing-active");     // hides the progress bar while typing
   const task = createTypingTask({
     parent: root, passage, seconds, label, debug: api.session.flags.debug, onStart, debugExtra, hintText: ui.startTypingHint,
     onEnd: (reason) => {
+      document.body.classList.remove("typing-active");
       onEnd?.(reason);   // hook (e.g. clear timers); the finished card always follows
       audio.pause("phase_end_" + label);
       audio.showStatus(false);
