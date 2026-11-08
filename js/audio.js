@@ -28,6 +28,7 @@ export function createAudio({ kind, cfg, pid, studyKey, sessionId, silent = fals
     setVolume: (v) => impl.setVolume(v),
     reset: () => impl.reset(),
     release: (keepalive) => impl.release?.(keepalive),
+    setStudyKey: (k) => impl.setStudyKey?.(k),
 
     // Resolves when the backend reports actual playback (or after the timeout, flagged).
     async play({ reason = "", fadeMs = cfg.musicFadeInMs } = {}) {
@@ -184,6 +185,7 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
       return { name: name || "Spotify playlist", total_ms: null, n_tracks: null, uri: playlistUri, unverified };
     },
     reset() { started = false; },
+    setStudyKey(k) { studyKey = k; },
     release(keepalive = false) { clearInterval(heartbeat); heartbeat = null; return callBroker("release", keepalive).catch(() => {}); },
     setVolume(v) { volume = v; impl.volume = v; player?.setVolume(v); },
     position() { return Math.round(last.paused ? last.position : last.position + (performance.now() - last.at)); },

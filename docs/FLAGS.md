@@ -7,7 +7,7 @@ Combine them with `&`, e.g. `?pid=P07&k=KEY` for a real participant or `?pid=T01
 | Parameter | Value | What it does |
 |---|---|---|
 | `pid` | `P01`..., letters, digits, `_`, `-`, up to 16 characters | The participant id. Upper-cased. Decides the mode order from its number (P01 to O1, ..., P06 to O6, P07 to O1, ...). Missing or invalid becomes `P00` and the session is logged as `pid_missing`. |
-| `k` | the study key | Access key for the Spotify token function. Without it the music step shows "This link is missing its access key". Not logged. |
+| `k` | the study key | Access key for the Spotify token function. Without it the music step shows "This link is missing its access key". Not logged. Remembered for the browser tab, so a later link without it in the same tab still works. In `debug=1` runs the music step also shows a field to paste the key. |
 
 ## Forcing behaviour (for pilots and replays)
 | Parameter | Value | What it does | Recorded as |

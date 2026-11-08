@@ -49,7 +49,10 @@ async function boot() {
   if (flags.gazetest) { session.cfg.gaze.enabled = true; session.cfg.gaze.optional = false; }
   session.settingsInfo = { source: remote.source, updated_at: remote.updated_at, error: remote.error ?? null, gaze: session.cfg.gaze, physical: session.cfg.physical };
   session.gaze = session.cfg.gaze.enabled ? createGaze({ kind: flags.gazeParam === "mouse" ? "mouse" : "webgazer", cfg: session.cfg }) : null;
-  session.studyKey = params.get("k") || "";
+  // The study key comes from the link (&k=...). It is remembered for this tab, so reopening a link without it in the same tab still works.
+  let storedKey = ""; try { storedKey = sessionStorage.getItem("studyKey") || ""; } catch (e) { /* storage blocked */ }
+  session.studyKey = params.get("k") || storedKey;
+  if (params.get("k")) { try { sessionStorage.setItem("studyKey", params.get("k")); } catch (e) { /* storage blocked */ } }
   const synthetic = params.get("audio") === "synthetic";
   const silent = synthetic && params.get("sound") !== "1";   // synthetic test audio is silent unless &sound=1
   setSoundMuted(silent);
