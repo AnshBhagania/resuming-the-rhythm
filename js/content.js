@@ -48,6 +48,8 @@ export const CONTENT = {
     keyboardPrompt: "Keyboard check: type the word below.",
     keyboardWord: "rhythm",
     screenOk: "Screen size OK.",
+    drmOk: "This browser can play protected audio.",
+    drmMissing: "This browser cannot play the study music (protected audio is not available). Please open the link in Google Chrome on a laptop or desktop computer.",
     screenBad: "Your window is too small. Use a laptop or desktop screen of at least 1280 x 720 and maximise the browser window."
   },
 
@@ -64,6 +66,7 @@ export const CONTENT = {
     missingKey: "This link is missing its access key. Please ask the researcher for a new link. (Researchers: sign in to the admin page in this browser, then reload.)",
     keyPlaceholder: "Study key (shown in debug runs only)",
     allBusy: "All Spotify accounts are in use by other sessions. Retrying automatically in 10 s...",
+    playbackProblem: "The music could not be played in this browser. Please use Google Chrome on a laptop or desktop computer and make sure protected content is allowed, then reload this page.",
     syntheticNote: "Synthetic audio (test mode)."
   },
 

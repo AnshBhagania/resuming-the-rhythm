@@ -47,6 +47,6 @@ See `docs/TESTING.md` for everything that still needs a person, a real device or
   audio stack latency (`device_info`), backend round-trip (`latency_probe`), Spotify account label (`spotify_account`).
 
 ## Known limits
-- Playback needs a real Chrome with Widevine (the Claude app's built-in browser has none).
+- Playback needs Chrome (or another browser) with Widevine DRM. The pre-check blocks browsers without it with a message, and logs `device_info.drm`. Firefox/Zen showed "Playback error" with no sound in the first test; use Chrome for the study.
 - Spotify hides Spotify-owned playlists from its API. Participants may need to copy such a playlist into their own account.
 - Sessions on one Spotify account cannot overlap.

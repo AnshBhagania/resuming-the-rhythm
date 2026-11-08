@@ -25,7 +25,9 @@ export function createAudio({ kind, cfg, pid, studyKey, sessionId, silent = fals
   let playing = false;
   const setPlaying = (p) => { playing = p; status.textContent = p ? "♪ playing" : "♪ paused"; status.classList.toggle("on", p); };
   impl.onTrackChange = (info) => log("track_change", info);
-  impl.onError = (info) => log("audio_error", info);
+  const problemListeners = new Set();
+  const PROBLEM_KINDS = ["playback_error", "initialization_error", "authentication_error", "account_error"];
+  impl.onError = (info) => { log("audio_error", info); if (PROBLEM_KINDS.includes(info.kind)) problemListeners.forEach((fn) => fn(info)); };
   impl.onAccount = (label) => log("spotify_account", { label });
 
   return {
@@ -39,6 +41,7 @@ export function createAudio({ kind, cfg, pid, studyKey, sessionId, silent = fals
     reset: () => impl.reset(),
     release: (keepalive) => impl.release?.(keepalive),
     setStudyKey: (k) => impl.setStudyKey?.(k),
+    onProblem(fn) { problemListeners.add(fn); return () => problemListeners.delete(fn); },
     hasAdminLogin: () => !!adminToken(),
 
     // Resolves when the backend reports actual playback (or after the timeout, flagged).

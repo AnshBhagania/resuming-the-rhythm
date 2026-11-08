@@ -11,6 +11,7 @@ export function render(root, api) {
     audio.reset();
     log("answer", { id: "music_setup", kind: audio.kind, name: info.name, uri: info.uri, total_ms: info.total_ms, n_tracks: info.n_tracks, volume: audio.volume });
     audio.showStatus(false);
+    offProblem();
     api.next();
   }, api.content.ui.continue, true);
 
@@ -27,6 +28,7 @@ export function render(root, api) {
     vol.disabled = false; testBtn.disabled = false; btn.disabled = false;
   };
 
+  const offProblem = audio.onProblem((info) => { msg.textContent = c.playbackProblem; });   // repeated "Playback error" etc.
   const rows = [el("p", {}, c.body)];
   if (audio.kind === "spotify") {
     const input = el("input", { type: "text", placeholder: "https://open.spotify.com/playlist/...", spellcheck: "false", autocomplete: "off" });
