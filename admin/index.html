@@ -44,6 +44,8 @@
   <input id="email" type="email" placeholder="email" autocomplete="username">
   <input id="password" type="password" placeholder="password" autocomplete="current-password">
   <button class="btn primary" id="signin">Sign in</button>
+  <button class="btn" id="signup">Create account</button>
+  <p class="muted">First time? Create an account with your allow-listed email, confirm it from the email Supabase sends, then sign in. Accounts not on the allow-list can sign up but see nothing.</p>
   <p id="loginmsg" class="err"></p>
 </div>
 
@@ -145,6 +147,15 @@ $("signin").onclick = async () => {
   const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
   if (error) { $("loginmsg").textContent = error.message; return; }
   boot();
+};
+$("signup").onclick = async () => {
+  $("loginmsg").className = "err"; $("loginmsg").textContent = "";
+  const password = $("password").value;
+  if (password.length < 8) { $("loginmsg").textContent = "Choose a password of at least 8 characters."; return; }
+  const { error } = await sb.auth.signUp({ email: $("email").value.trim(), password, options: { emailRedirectTo: location.origin + location.pathname } });
+  if (error) { $("loginmsg").textContent = error.message; return; }
+  $("loginmsg").className = "muted";
+  $("loginmsg").textContent = "Account created. Open the confirmation email, click the link, then come back and sign in.";
 };
 $("password").addEventListener("keydown", (e) => { if (e.key === "Enter") $("signin").click(); });
 $("signout").onclick = async () => { await sb.auth.signOut(); location.reload(); };
