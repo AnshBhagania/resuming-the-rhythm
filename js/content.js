@@ -66,6 +66,9 @@ export const CONTENT = {
     missingKey: "This link is missing its access key. Please ask the researcher for a new link. (Researchers: sign in to the admin page in this browser, then reload.)",
     keyPlaceholder: "Study key (shown in debug runs only)",
     allBusy: "All Spotify accounts are in use by other sessions. Retrying automatically in 10 s...",
+    badKey: "The access key in this link was not accepted. Please ask the researcher for a new link.",
+    badOrigin: "This page address is not allowed to use the music service. Please open the official study link.",
+    connectFailed: "Could not connect to Spotify. Please check your connection and try again.",
     playbackProblem: "The music could not be played in this browser. Please use Google Chrome on a laptop or desktop computer and make sure protected content is allowed, then reload this page.",
     syntheticNote: "Synthetic audio (test mode)."
   },

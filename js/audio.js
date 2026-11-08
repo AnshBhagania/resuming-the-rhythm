@@ -43,6 +43,7 @@ export function createAudio({ kind, cfg, pid, studyKey, sessionId, silent = fals
     setStudyKey: (k) => impl.setStudyKey?.(k),
     onProblem(fn) { problemListeners.add(fn); return () => problemListeners.delete(fn); },
     hasAdminLogin: () => !!adminToken(),
+    unlock: () => impl.unlock?.(),       // call from a real click: browsers only unlock audio on a user gesture
 
     // Resolves when the backend reports actual playback (or after the timeout, flagged).
     async play({ reason = "", fadeMs = cfg.musicFadeInMs } = {}) {
@@ -113,7 +114,7 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
   const waiters = [];
   let sdkPromise = null, connectPromise = null;
 
-  let heartbeat = null, accountLabel = null;
+  let heartbeat = null, accountLabel = null, hiddenSince = Date.now();
   async function callBroker(action, keepalive = false) {
     const admin = adminToken();
     return fetch(`${cfg.supabaseUrl}/functions/v1/${cfg.tokenFn}`, {
@@ -134,7 +135,16 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
     const j = await res.json();
     token = j.access_token; tokenExp = Date.now() + j.expires_in * 1000;
     if (j.account?.label && j.account.label !== accountLabel) { accountLabel = j.account.label; impl.onAccount?.(accountLabel); }
-    if (!heartbeat) heartbeat = setInterval(() => getToken(true).catch(e => impl.onError?.({ kind: "lease_renew_failed", message: String(e.message) })), cfg.leaseHeartbeatMs);
+    if (!heartbeat) {
+      heartbeat = setInterval(() => {
+        if (document.hidden && Date.now() - hiddenSince > 10 * 60 * 1000) return;   // abandoned background tab: let the lease lapse
+        getToken(true).catch(e => impl.onError?.({ kind: "lease_renew_failed", message: String(e.message) }));
+      }, cfg.leaseHeartbeatMs);
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) hiddenSince = Date.now();
+        else getToken(true).catch(() => {});                                        // back in front: renew (or find the account taken)
+      });
+    }
     return token;
   }
   async function api(path, opts = {}) {
@@ -159,6 +169,7 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
     // Must be called from a click handler (browser autoplay policy).
     activate() {
       connectPromise ??= (async () => {
+        await getToken();                 // lease an account first: "all busy" or a bad key fail here at once, with a code
         await loadSdk();
         player = new window.Spotify.Player({ name: "Typing Study", volume, getOAuthToken: (cb) => getToken().then(cb).catch(e => impl.onError?.({ kind: "token", message: String(e) })) });
         for (const ev of ["initialization_error", "authentication_error", "account_error", "playback_error"])
@@ -180,7 +191,7 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
         player.activateElement?.();
         await player.connect();
         await ready;
-      })();
+      })().catch((e) => { connectPromise = null; try { player?.disconnect(); } catch (x) { /* ignore */ } player = null; throw e; });
       return connectPromise;
     },
     // Spotify (since 2024-11 / 2026) hides playlist CONTENTS for playlists the account does not own and hides
@@ -200,6 +211,7 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
       return { name: name || "Spotify playlist", total_ms: null, n_tracks: null, uri: playlistUri, unverified };
     },
     reset() { started = false; },
+    unlock() { player?.activateElement?.(); },
     setStudyKey(k) { studyKey = k; },
     release(keepalive = false) { clearInterval(heartbeat); heartbeat = null; return callBroker("release", keepalive).catch(() => {}); },
     setVolume(v) { volume = v; impl.volume = v; player?.setVolume(v); },

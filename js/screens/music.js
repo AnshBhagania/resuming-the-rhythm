@@ -18,6 +18,7 @@ export function render(root, api) {
   const vol = el("input", { type: "range", min: "0", max: "1", step: "0.05", value: String(audio.volume), disabled: true,
     oninput: () => audio.setVolume(Number(vol.value)) });
   const testBtn = el("button", { class: "primary", disabled: true, onclick: async () => {
+    audio.unlock();                       // a real click: unlocks audio even if the playlist was loaded by the automatic retry
     if (!testing) { testing = true; testBtn.textContent = c.stop; await audio.play({ reason: "soundtest", fadeMs: 200 }); }
     else { testing = false; testBtn.textContent = c.test; await audio.pause("soundtest"); }
   } }, c.test);
@@ -51,7 +52,9 @@ export function render(root, api) {
         if (e.code === "no_free_account") {
           msg.textContent = c.allBusy;
           setTimeout(() => load.click(), 10000);
-        } else msg.textContent = String(e.message || e);
+        } else if (e.code === "key" || e.code === "not_configured") msg.textContent = c.badKey;
+        else if (e.code === "origin") msg.textContent = c.badOrigin;
+        else msg.textContent = c.connectFailed + " (" + String(e.message || e) + ")";
       }
     } }, c.load);
     rows.push(el("label", {}, c.linkLabel), el("div", { class: "fieldrow" }, input, load));
