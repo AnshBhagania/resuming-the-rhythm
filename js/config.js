@@ -19,6 +19,9 @@ export const CONFIG = {
   practiceTailSeconds: 10,
   supabaseUrl: "https://etdtijvlguuxqvehpdvn.supabase.co",
   tokenFn: "spotify-token",
+  supabaseKey: "sb_publishable_TZeG7Ic79emzrJNfU7AzJg_zyRREfxb", // publishable key: safe in the repo (insert-only functions + RLS)
+  spotifyClientId: "7bb2a29fb58e49989c6e0ffe11162254",           // public
+  leaseHeartbeatMs: 45000,
   physicalPlaceholderKey: "F9",
   flushIntervalMs: 2000,
   flushMaxEvents: 200,

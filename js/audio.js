@@ -8,14 +8,15 @@ import { el } from "./ui.js";
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-export function createAudio({ kind, cfg, pid, studyKey }) {
-  const impl = kind === "synthetic" ? syntheticImpl() : spotifyImpl({ cfg, pid, studyKey });
+export function createAudio({ kind, cfg, pid, studyKey, sessionId, silent = false }) {
+  const impl = kind === "synthetic" ? syntheticImpl({ silent }) : spotifyImpl({ cfg, pid, studyKey, sessionId });
   const status = el("div", { id: "music-status", class: "music-status" }, "♪ paused");
   document.body.append(status);
   let playing = false;
   const setPlaying = (p) => { playing = p; status.textContent = p ? "♪ playing" : "♪ paused"; status.classList.toggle("on", p); };
   impl.onTrackChange = (info) => log("track_change", info);
   impl.onError = (info) => log("audio_error", info);
+  impl.onAccount = (label) => log("spotify_account", { label });
 
   return {
     kind,
@@ -26,6 +27,7 @@ export function createAudio({ kind, cfg, pid, studyKey }) {
     loadPlaylist: (url) => impl.loadPlaylist(url),
     setVolume: (v) => impl.setVolume(v),
     reset: () => impl.reset(),
+    release: (keepalive) => impl.release?.(keepalive),
 
     // Resolves when the backend reports actual playback (or after the timeout, flagged).
     async play({ reason = "", fadeMs = cfg.musicFadeInMs } = {}) {
@@ -52,7 +54,7 @@ export function createAudio({ kind, cfg, pid, studyKey }) {
 }
 
 // ---------------------------------------------------------------- synthetic
-function syntheticImpl() {
+function syntheticImpl({ silent = false } = {}) {
   let ctx = null, master = null, oscs = [];
   let volume = 0.5, startedAt = null, accumulated = 0;
   const impl = {
@@ -60,7 +62,7 @@ function syntheticImpl() {
     async activate() {},
     async loadPlaylist() { return { name: "Synthetic test tone", total_ms: 60 * 60 * 1000, n_tracks: 1, uri: "synthetic" }; },
     reset() { accumulated = 0; startedAt = null; },
-    setVolume(v) { volume = v; impl.volume = v; if (master) master.gain.value = v * 0.3; },
+    setVolume(v) { volume = v; impl.volume = v; if (master) master.gain.value = silent ? 0 : v * 0.3; },
     position: () => Math.round(accumulated + (startedAt ? performance.now() - startedAt : 0)),
     trackId: () => "synthetic",
     async rawPlay(fadeMs) {
@@ -75,7 +77,7 @@ function syntheticImpl() {
       const now = ctx.currentTime;
       master.gain.cancelScheduledValues(now);
       master.gain.setValueAtTime(0, now);
-      master.gain.linearRampToValueAtTime(volume * 0.3, now + fadeMs / 1000);
+      master.gain.linearRampToValueAtTime(silent ? 0 : volume * 0.3, now + fadeMs / 1000);
       startedAt = performance.now();
       return { t: performance.now() };
     },
@@ -88,7 +90,7 @@ function syntheticImpl() {
 }
 
 // ---------------------------------------------------------------- spotify
-function spotifyImpl({ cfg, pid, studyKey }) {
+function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
   let player = null, deviceId = null, started = false, playlistUri = null;
   let token = null, tokenExp = 0;
   let volume = 0.5;
@@ -96,15 +98,27 @@ function spotifyImpl({ cfg, pid, studyKey }) {
   const waiters = [];
   let sdkPromise = null, connectPromise = null;
 
-  async function getToken() {
-    if (token && tokenExp > Date.now() + 60_000) return token;
-    const res = await fetch(`${cfg.supabaseUrl}/functions/v1/${cfg.tokenFn}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: studyKey, pid })
+  let heartbeat = null, accountLabel = null;
+  async function callBroker(action, keepalive = false) {
+    return fetch(`${cfg.supabaseUrl}/functions/v1/${cfg.tokenFn}`, {
+      method: "POST", keepalive, headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, key: studyKey, pid, session_id: sessionId })
     });
-    if (!res.ok) throw new Error("token broker " + res.status);
+  }
+  // Leases one account for this session; calling it again renews the lease. 409 = every account is busy.
+  async function getToken(force = false) {
+    if (!force && token && tokenExp > Date.now() + 60_000) return token;
+    const res = await callBroker("token");
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      const err = new Error(j.error || ("token broker " + res.status));
+      err.code = j.error;
+      throw err;
+    }
     const j = await res.json();
     token = j.access_token; tokenExp = Date.now() + j.expires_in * 1000;
+    if (j.account?.label && j.account.label !== accountLabel) { accountLabel = j.account.label; impl.onAccount?.(accountLabel); }
+    if (!heartbeat) heartbeat = setInterval(() => getToken(true).catch(e => impl.onError?.({ kind: "lease_renew_failed", message: String(e.message) })), cfg.leaseHeartbeatMs);
     return token;
   }
   async function api(path, opts = {}) {
@@ -177,6 +191,7 @@ function spotifyImpl({ cfg, pid, studyKey }) {
       return { name, total_ms: total, n_tracks: n, uri: playlistUri };
     },
     reset() { started = false; },
+    release(keepalive = false) { clearInterval(heartbeat); heartbeat = null; return callBroker("release", keepalive).catch(() => {}); },
     setVolume(v) { volume = v; impl.volume = v; player?.setVolume(v); },
     position() { return Math.round(last.paused ? last.position : last.position + (performance.now() - last.at)); },
     trackId: () => last.trackId,

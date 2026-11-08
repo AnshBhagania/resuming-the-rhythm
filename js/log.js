@@ -4,6 +4,8 @@ const buffer = [];
 let seq = 0;
 const ctx = { session_id: null, pid: null, phase: "welcome", block: 0, condition: null, intr: 0 };
 let persistTimer = null;
+let onEventHook = null;
+export function setOnEvent(fn) { onEventHook = fn; }
 
 export function setContext(patch) { Object.assign(ctx, patch); }
 export function getContext() { return { ...ctx }; }
@@ -23,6 +25,7 @@ export function log(type, data = {}, t) {
   };
   buffer.push(ev);
   schedulePersist();
+  onEventHook?.(buffer.length);
   return ev;
 }
 

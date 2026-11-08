@@ -37,7 +37,13 @@ export function render(root, api) {
       try {
         await audio.activate();            // inside the click: unlocks audio playback
         finishLoad(await audio.loadPlaylist(input.value.trim()));
-      } catch (e) { msg.textContent = String(e.message || e); log("audio_error", { kind: "setup", message: String(e.message || e) }); }
+      } catch (e) {
+        log("audio_error", { kind: e.code || "setup", message: String(e.message || e) });
+        if (e.code === "no_free_account") {
+          msg.textContent = "All Spotify accounts are in use by other sessions. Retrying automatically in 10 s...";
+          setTimeout(() => load.click(), 10000);
+        } else msg.textContent = String(e.message || e);
+      }
     } }, c.load);
     rows.push(el("label", {}, c.linkLabel), el("div", { class: "fieldrow" }, input, load));
   } else {

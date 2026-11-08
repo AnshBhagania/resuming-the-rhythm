@@ -1,7 +1,10 @@
 // Short two-tone notification for the email pop-up (WebAudio, no asset needed).
 let ctx = null;
+let muted = false;
+export function setSoundMuted(m) { muted = m; }
 
 export function playNotification() {
+  if (muted) return;   // test runs: events still fire, nothing is audible
   try {
     ctx ??= new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === "suspended") ctx.resume();

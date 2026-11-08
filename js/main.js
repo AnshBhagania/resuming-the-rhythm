@@ -4,6 +4,8 @@ import { createSession, createMachine, sessionStartData } from "./session.js";
 import { log, setContext, downloadLog } from "./log.js";
 import { el, screen, mount } from "./ui.js";
 import { createAudio } from "./audio.js";
+import { startDb } from "./db.js";
+import { setSoundMuted } from "./sound.js";
 
 const params = new URLSearchParams(location.search);
 const root = document.getElementById("app");
@@ -35,10 +37,15 @@ function boot() {
 
   const session = createSession({ pid, pidMissing, flags });
   session.studyKey = params.get("k") || "";
-  session.audio = createAudio({ kind: params.get("audio") === "synthetic" ? "synthetic" : "spotify", cfg: session.cfg, pid, studyKey: session.studyKey });
+  const synthetic = params.get("audio") === "synthetic";
+  const silent = synthetic && params.get("sound") !== "1";   // synthetic test audio is silent unless &sound=1
+  setSoundMuted(silent);
+  session.audio = createAudio({ silent, kind: synthetic ? "synthetic" : "spotify", cfg: session.cfg, pid, studyKey: session.studyKey, sessionId: session.id });
   flags.audio = session.audio.kind;
   setContext({ session_id: session.id, pid });
-  log("session_start", sessionStartData(session));
+  const startData = sessionStartData(session);
+  log("session_start", startData);
+  if (params.get("nodb") !== "1") startDb(session, startData);
 
   // Page health
   document.addEventListener("visibilitychange", () => log("visibility_change", { hidden: document.hidden }));

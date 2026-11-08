@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Study admin</title>
+  <style>
+    :root { --bg:#f6f6f4; --fg:#1d1d1f; --muted:#6e6e73; --card:#fff; --line:#e3e3e0; --accent:#2f5bd3; --bad:#c62828; --warn:#b26a00; --ok:#2e7d32; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#17171a; --fg:#eaeaea; --muted:#9a9aa0; --card:#222226; --line:#34343a; --accent:#7ea2ff; --bad:#ff7b72; --warn:#e3a008; --ok:#56d364; } }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui,-apple-system,sans-serif; }
+    header { display:flex; align-items:center; gap:16px; padding:10px 20px; background:var(--card); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
+    header h1 { font-size:16px; margin:0; }
+    nav { display:flex; gap:4px; }
+    nav button { border:0; background:none; padding:6px 12px; border-radius:6px; cursor:pointer; color:var(--muted); font:inherit; }
+    nav button.on { background:var(--accent); color:#fff; }
+    .spacer { flex:1; }
+    main { padding:20px; max-width:1300px; margin:0 auto; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+    th { color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap; }
+    tr.click { cursor:pointer; } tr.click:hover { background:rgba(127,127,127,.08); }
+    .badge { display:inline-block; padding:1px 7px; border-radius:10px; font-size:12px; margin-right:4px; background:rgba(127,127,127,.18); }
+    .badge.bad { background:var(--bad); color:#fff; } .badge.warn { background:var(--warn); color:#fff; } .badge.ok { background:var(--ok); color:#fff; }
+    button.btn { font:inherit; padding:5px 12px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--fg); cursor:pointer; }
+    button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    button.danger { color:var(--bad); }
+    input, select { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--fg); }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+    .muted { color:var(--muted); } .mono { font:12px ui-monospace,Menlo,monospace; }
+    .login { max-width:340px; margin:80px auto; }
+    .login input { width:100%; margin-bottom:10px; }
+    pre.data { margin:0; white-space:pre-wrap; word-break:break-all; font:11px ui-monospace,Menlo,monospace; max-width:560px; }
+    tr.issue td { background:rgba(198,40,40,.10); }
+    #msg { min-height:20px; } .err { color:var(--bad); }
+    [hidden] { display:none !important; }
+  </style>
+</head>
+<body>
+<div id="login" class="login card" hidden>
+  <h2>Study admin</h2>
+  <input id="email" type="email" placeholder="email" autocomplete="username">
+  <input id="password" type="password" placeholder="password" autocomplete="current-password">
+  <button class="btn primary" id="signin">Sign in</button>
+  <p id="loginmsg" class="err"></p>
+</div>
+
+<div id="app" hidden>
+  <header>
+    <h1>Resuming the Rhythm: admin</h1>
+    <nav>
+      <button data-tab="sessions" class="on">Sessions</button>
+      <button data-tab="issues">Issues</button>
+      <button data-tab="accounts">Spotify accounts</button>
+    </nav>
+    <span class="spacer"></span>
+    <span class="muted" id="who"></span>
+    <button class="btn" id="signout">Sign out</button>
+  </header>
+  <main>
+    <div id="msg"></div>
+
+    <section id="tab-sessions">
+      <div class="card">
+        <div class="row">
+          <label><input type="checkbox" id="hideTest" checked> hide debug / dry-run / nodb</label>
+          <button class="btn" id="refresh">Refresh</button>
+          <span class="muted" id="count"></span>
+        </div>
+        <table><thead><tr><th>Participant</th><th>Started</th><th>Status</th><th>Phase</th><th>Order</th><th>Interr.</th><th>Issues</th><th>Spotify</th><th>Events</th></tr></thead>
+        <tbody id="sessionRows"></tbody></table>
+      </div>
+      <div class="card" id="detail" hidden>
+        <div class="row">
+          <strong id="detailTitle"></strong>
+          <select id="typeFilter"><option value="">all types</option></select>
+          <label><input type="checkbox" id="issuesOnly"> issues only</label>
+          <input id="textFilter" placeholder="search in data">
+          <button class="btn" id="dlJson">Download JSON</button>
+          <button class="btn" id="dlCsv">Download CSV</button>
+          <button class="btn" id="closeDetail">Close</button>
+        </div>
+        <div class="muted" id="detailInfo"></div>
+        <table><thead><tr><th>seq</th><th>t (ms)</th><th>phase</th><th>blk</th><th>cond</th><th>intr</th><th>type</th><th>data</th></tr></thead>
+        <tbody id="eventRows"></tbody></table>
+      </div>
+    </section>
+
+    <section id="tab-issues" hidden>
+      <div class="card">
+        <div class="row"><button class="btn" id="refreshIssues">Refresh</button><span class="muted">Latest audio errors, email timeouts, hidden tabs and upload errors across all sessions.</span></div>
+        <table><thead><tr><th>When</th><th>Participant</th><th>Type</th><th>Phase</th><th>Detail</th></tr></thead><tbody id="issueRows"></tbody></table>
+      </div>
+    </section>
+
+    <section id="tab-accounts" hidden>
+      <div class="card">
+        <div class="row"><button class="btn" id="refreshAccounts">Refresh</button>
+          <span class="muted">Each running session leases one account. Link one account per researcher to run sessions in parallel.</span></div>
+        <table><thead><tr><th>Label</th><th>Spotify user</th><th>Plan</th><th>State</th><th>In use by</th><th></th></tr></thead><tbody id="accountRows"></tbody></table>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Link a Spotify account</h3>
+        <p class="muted">Sign in to Spotify <em>in this browser</em> as the account to add (Premium required), then click the button. To switch accounts, use "Not you?" on the Spotify page.
+        Redirect URI that must be registered in the Spotify app: <code id="redirectUri"></code></p>
+        <div class="row"><input id="newLabel" placeholder="label, e.g. Mina" maxlength="40"><button class="btn primary" id="linkBtn">Authorize with Spotify</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SB_URL = "https://etdtijvlguuxqvehpdvn.supabase.co";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0ZHRpanZsZ3V1eHF2ZWhwZHZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxNTcxMTksImV4cCI6MjEwOTczMzExOX0.Jr0pq6SXzqVGj6P3id9nTgn3jhHXMhMIvR9Nf55ZajY"; // public anon key
+const SPOTIFY_CLIENT_ID = "7bb2a29fb58e49989c6e0ffe11162254";
+const SCOPES = "streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state";
+const REDIRECT = location.origin + location.pathname;
+const ISSUE_TYPES = ["audio_error", "interruption_timeout", "upload_error", "visibility_change"];
+
+const sb = supabase.createClient(SB_URL, ANON);
+const $ = (id) => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag); Object.assign(e, props); kids.flat().forEach(k => k != null && e.append(k)); return e; };
+const fmt = (iso) => iso ? new Date(iso).toLocaleString() : "";
+const ago = (iso) => { if (!iso) return "never"; const s = (Date.now() - new Date(iso)) / 1000; return s < 90 ? Math.round(s) + " s ago" : s < 5400 ? Math.round(s / 60) + " min ago" : Math.round(s / 3600) + " h ago"; };
+const say = (t, bad) => { $("msg").textContent = t || ""; $("msg").className = bad ? "err" : ""; };
+let sessions = [], current = null, currentEvents = [], timer = null;
+
+// ---------- auth ----------
+async function boot() {
+  $("redirectUri").textContent = REDIRECT;
+  const { data } = await sb.auth.getSession();
+  if (!data.session) { $("login").hidden = false; return; }
+  const { data: adm, error } = await sb.from("admin_emails").select("email");
+  if (error || !adm?.length) { await sb.auth.signOut(); $("login").hidden = false; $("loginmsg").textContent = "This account is not an admin."; return; }
+  $("login").hidden = true; $("app").hidden = false; $("who").textContent = data.session.user.email;
+  await handleSpotifyReturn();
+  loadSessions(); loadAccounts();
+  timer = setInterval(() => { if (!document.hidden && !$("tab-sessions").hidden) loadSessions(true); }, 10000);
+}
+$("signin").onclick = async () => {
+  $("loginmsg").textContent = "";
+  const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
+  if (error) { $("loginmsg").textContent = error.message; return; }
+  boot();
+};
+$("password").addEventListener("keydown", (e) => { if (e.key === "Enter") $("signin").click(); });
+$("signout").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  for (const t of ["sessions", "issues", "accounts"]) $("tab-" + t).hidden = t !== b.dataset.tab;
+  if (b.dataset.tab === "issues") loadIssues();
+  if (b.dataset.tab === "accounts") loadAccounts();
+});
+
+// ---------- sessions ----------
+async function loadSessions(quiet) {
+  const { data, error } = await sb.from("session_summary").select("*").order("started_at", { ascending: false }).limit(300);
+  if (error) { say("Could not load sessions: " + error.message, true); return; }
+  sessions = data; if (!quiet) say("");
+  renderSessions();
+}
+const isTest = (s) => !!(s.flags?.debug || s.flags?.dryrun || s.flags?.nodb);
+function statusOf(s) {
+  if (s.finished) return ["finished", "ok"];
+  const idle = s.last_event_at ? (Date.now() - new Date(s.last_event_at)) / 1000 : Infinity;
+  if (idle < 60) return ["active", "ok"];
+  return [s.n_events ? "stopped " + ago(s.last_event_at) : "no data", "warn"];
+}
+function renderSessions() {
+  const hide = $("hideTest").checked;
+  const rows = sessions.filter(s => !(hide && isTest(s)));
+  $("count").textContent = `${rows.length} of ${sessions.length} sessions`;
+  $("sessionRows").replaceChildren(...rows.map(s => {
+    const [st, cls] = statusOf(s);
+    const issues = [];
+    if (s.audio_errors) issues.push(el("span", { className: "badge bad", textContent: "audio " + s.audio_errors }));
+    if (s.email_timeouts) issues.push(el("span", { className: "badge warn", textContent: "timeout " + s.email_timeouts }));
+    if (s.hidden_tabs) issues.push(el("span", { className: "badge warn", textContent: "tab hidden " + s.hidden_tabs }));
+    if (s.upload_errors) issues.push(el("span", { className: "badge bad", textContent: "upload " + s.upload_errors }));
+    const tr = el("tr", { className: "click" },
+      el("td", {}, el("strong", { textContent: s.pid }), isTest(s) ? el("span", { className: "badge", textContent: "test" }) : null),
+      el("td", { textContent: fmt(s.started_at) }),
+      el("td", {}, el("span", { className: "badge " + cls, textContent: st })),
+      el("td", { textContent: s.last_phase || "" }),
+      el("td", { textContent: s.order_code || "" }),
+      el("td", { textContent: s.interruptions + " / 12" }),
+      el("td", {}, issues.length ? issues : el("span", { className: "muted", textContent: "none" })),
+      el("td", { textContent: s.spotify_label || "" }),
+      el("td", { textContent: s.n_events }));
+    tr.onclick = () => openSession(s);
+    return tr;
+  }));
+}
+$("hideTest").onchange = renderSessions;
+$("refresh").onclick = () => loadSessions();
+
+async function openSession(s) {
+  current = s; currentEvents = [];
+  $("detail").hidden = false;
+  $("detailTitle").textContent = `${s.pid}  ${s.session_id}`;
+  $("detailInfo").textContent = "Loading events...";
+  $("eventRows").replaceChildren();
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await sb.from("events").select("seq,t,phase,block,condition,intr,type,data,received_at")
+      .eq("session_id", s.session_id).order("seq").range(from, from + 999);
+    if (error) { $("detailInfo").textContent = "Error: " + error.message; return; }
+    currentEvents.push(...data);
+    if (data.length < 1000) break;
+  }
+  const types = [...new Set(currentEvents.map(e => e.type))].sort();
+  $("typeFilter").replaceChildren(el("option", { value: "", textContent: "all types" }), ...types.map(t => el("option", { value: t, textContent: t })));
+  $("detail").scrollIntoView({ behavior: "smooth" });
+  renderEvents();
+}
+const isIssue = (e) => ISSUE_TYPES.includes(e.type) && (e.type !== "visibility_change" || e.data?.hidden === true);
+function renderEvents() {
+  const type = $("typeFilter").value, only = $("issuesOnly").checked, q = $("textFilter").value.toLowerCase();
+  const rows = currentEvents.filter(e => (!type || e.type === type) && (!only || isIssue(e)) && (!q || JSON.stringify(e.data).toLowerCase().includes(q)));
+  $("detailInfo").textContent = `${rows.length} of ${currentEvents.length} events` + (rows.length > 2000 ? " (showing first 2000, use filters or download)" : "");
+  $("eventRows").replaceChildren(...rows.slice(0, 2000).map(e => el("tr", { className: isIssue(e) ? "issue" : "" },
+    el("td", { textContent: e.seq }), el("td", { className: "mono", textContent: Number(e.t).toFixed(1) }),
+    el("td", { textContent: e.phase || "" }), el("td", { textContent: e.block ?? "" }), el("td", { textContent: e.condition || "" }),
+    el("td", { textContent: e.intr || "" }), el("td", { textContent: e.type }),
+    el("td", {}, el("pre", { className: "data", textContent: JSON.stringify(e.data) })))));
+}
+["typeFilter", "issuesOnly", "textFilter"].forEach(id => $(id).addEventListener("input", renderEvents));
+$("closeDetail").onclick = () => { $("detail").hidden = true; current = null; };
+function download(name, text, mime) { const a = el("a", { href: URL.createObjectURL(new Blob([text], { type: mime })), download: name }); document.body.append(a); a.click(); a.remove(); }
+$("dlJson").onclick = () => download(`rhythm_${current.pid}_${current.session_id}.json`, JSON.stringify(currentEvents, null, 1), "application/json");
+$("dlCsv").onclick = () => {
+  const q = (v) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  const lines = ["session_id,pid,seq,t,phase,block,condition,intr,type,data"].concat(currentEvents.map(e =>
+    [current.session_id, current.pid, e.seq, e.t, e.phase, e.block, e.condition, e.intr, e.type, JSON.stringify(e.data)].map(q).join(",")));
+  download(`rhythm_${current.pid}_${current.session_id}.csv`, lines.join("\n"), "text/csv");
+};
+
+// ---------- issues ----------
+async function loadIssues() {
+  const { data, error } = await sb.from("events").select("id,session_id,pid,type,phase,data,received_at").in("type", ISSUE_TYPES).order("id", { ascending: false }).limit(300);
+  if (error) { say("Could not load issues: " + error.message, true); return; }
+  const rows = data.filter(e => e.type !== "visibility_change" || e.data?.hidden === true);
+  $("issueRows").replaceChildren(...rows.map(e => el("tr", {},
+    el("td", { textContent: fmt(e.received_at) }), el("td", { textContent: e.pid }), el("td", {}, el("span", { className: "badge " + (e.type === "audio_error" || e.type === "upload_error" ? "bad" : "warn"), textContent: e.type })),
+    el("td", { textContent: e.phase || "" }), el("td", {}, el("pre", { className: "data", textContent: JSON.stringify(e.data) })))));
+  if (!rows.length) $("issueRows").replaceChildren(el("tr", {}, el("td", { colSpan: 5, className: "muted", textContent: "No issues recorded." })));
+}
+$("refreshIssues").onclick = loadIssues;
+
+// ---------- spotify accounts ----------
+async function callAdmin(body) {
+  const { data } = await sb.auth.getSession();
+  const res = await fetch(`${SB_URL}/functions/v1/spotify-admin`, {
+    method: "POST", headers: { "Content-Type": "application/json", apikey: ANON, Authorization: "Bearer " + data.session.access_token }, body: JSON.stringify(body)
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(j.error ? `${j.error}${j.detail ? ": " + j.detail : ""}${j.product ? " (plan: " + j.product + ")" : ""}` : "HTTP " + res.status);
+  return j;
+}
+async function loadAccounts() {
+  const { data, error } = await sb.from("spotify_accounts").select("id,label,spotify_user_id,display_name,product,enabled,lease_session,lease_expires").order("created_at");
+  if (error) { say("Could not load accounts: " + error.message, true); return; }
+  const now = Date.now();
+  const rows = data.map(a => {
+    const leased = a.lease_session && a.lease_expires && new Date(a.lease_expires) > now;
+    const sess = leased ? sessions.find(s => s.session_id === a.lease_session) : null;
+    const actions = el("td", {},
+      el("button", { className: "btn", textContent: a.enabled ? "Disable" : "Enable", onclick: () => act({ action: "set_enabled", id: a.id, enabled: !a.enabled }) }), " ",
+      leased ? el("button", { className: "btn", textContent: "Free now", onclick: () => act({ action: "release", id: a.id }) }) : "", " ",
+      el("button", { className: "btn danger", textContent: "Remove", onclick: () => { if (confirm(`Remove account "${a.label}"?`)) act({ action: "delete", id: a.id }); } }));
+    return el("tr", {}, el("td", {}, el("strong", { textContent: a.label })), el("td", { textContent: a.display_name || a.spotify_user_id }), el("td", { textContent: a.product || "" }),
+      el("td", {}, el("span", { className: "badge " + (!a.enabled ? "" : leased ? "warn" : "ok"), textContent: !a.enabled ? "disabled" : leased ? "in use" : "free" })),
+      el("td", { textContent: leased ? (sess ? sess.pid : a.lease_session.slice(0, 8)) + " (lease to " + new Date(a.lease_expires).toLocaleTimeString() + ")" : "" }), actions);
+  });
+  $("accountRows").replaceChildren(...(rows.length ? rows : [el("tr", {}, el("td", { colSpan: 6, className: "muted", textContent: "No accounts linked yet." }))]));
+}
+async function act(body) { try { await callAdmin(body); say("Done."); } catch (e) { say(e.message, true); } loadAccounts(); }
+$("refreshAccounts").onclick = loadAccounts;
+
+const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const rand = (n) => b64url(crypto.getRandomValues(new Uint8Array(n)));
+$("linkBtn").onclick = async () => {
+  const label = $("newLabel").value.trim();
+  if (!label) { say("Give the account a label first.", true); return; }
+  const verifier = rand(48), state = rand(12);
+  const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
+  sessionStorage.setItem("sp_verifier", verifier); sessionStorage.setItem("sp_state", state); sessionStorage.setItem("sp_label", label);
+  location.href = "https://accounts.spotify.com/authorize?" + new URLSearchParams({ client_id: SPOTIFY_CLIENT_ID, response_type: "code", redirect_uri: REDIRECT, scope: SCOPES,
+    code_challenge_method: "S256", code_challenge: challenge, state });
+};
+async function handleSpotifyReturn() {
+  const q = new URLSearchParams(location.search);
+  if (!q.get("code") && !q.get("error")) return;
+  history.replaceState({}, "", REDIRECT);
+  document.querySelector('nav button[data-tab="accounts"]').click();
+  if (q.get("error")) { say("Spotify returned: " + q.get("error"), true); return; }
+  if (q.get("state") !== sessionStorage.getItem("sp_state")) { say("State mismatch, start again.", true); return; }
+  say("Linking account...");
+  try {
+    const res = await fetch("https://accounts.spotify.com/api/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ client_id: SPOTIFY_CLIENT_ID, grant_type: "authorization_code", code: q.get("code"), redirect_uri: REDIRECT, code_verifier: sessionStorage.getItem("sp_verifier") }) });
+    const j = await res.json();
+    if (!res.ok || !j.refresh_token) throw new Error("token exchange failed: " + (j.error_description || j.error));
+    const r = await callAdmin({ action: "link", refresh_token: j.refresh_token, label: sessionStorage.getItem("sp_label") });
+    say(`Linked "${r.label}" (${r.display_name}).`);
+  } catch (e) { say("Link failed: " + e.message, true); }
+  ["sp_verifier", "sp_state", "sp_label"].forEach(k => sessionStorage.removeItem(k));
+}
+
+boot();
+</script>
+</body>
+</html>
