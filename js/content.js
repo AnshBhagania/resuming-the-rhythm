@@ -4,6 +4,7 @@ export const CONTENT = {
   // Shared by several screens
   ui: {
     continue: "Continue",
+    back: "Back",
     start: "Start",
     retry: "Retry",
     loading: "Loading...",

@@ -16,6 +16,10 @@
 ## URL flags
 See `docs/FLAGS.md` for every parameter, what it does and which ones mark a session as test data.
 
+## Admin Tester
+The admin **Tester** tab builds test links: choose the flags (short timings, silent audio, gaze off or simulated, no upload, order, seed), then open the whole study or any single screen directly.
+Test sessions are flagged and hidden on the Sessions tab by default.
+
 ## Local testing
 Serve the repo with any static server on **127.0.0.1** (not localhost; browsers cache modules aggressively there), e.g.
 `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?pid=T01&debug=1&dryrun=1&audio=synthetic&nodb=1`.

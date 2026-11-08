@@ -25,6 +25,7 @@ export function render(root, api) {
     else { log("gaze_skipped", { state: s.gazeState }); api.next(); }
     return;
   }
+  if (!test && (s.gazeState === "ready" || s.gazeState === "ready_low_accuracy")) { api.next(); return; }   // already calibrated: never calibrate twice
   let attempt = 0;
 
   function intro() {

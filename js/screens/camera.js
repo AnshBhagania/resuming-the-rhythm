@@ -7,6 +7,7 @@ export function render(root, api) {
   const c = api.content.camera, g = api.cfg.gaze, s = api.session;
   if (!g.enabled || !s.gaze) { s.gazeState = "disabled"; log("gaze_state", { state: "disabled" }); api.next(); return; }
 
+  if (s.gazeState && !s.flags.gazetest) { api.next(); return; }   // permission already settled earlier in this session
   const msg = el("p", { class: "note" });
   const done = (state, extra = {}) => { s.gazeState = state; log("gaze_state", { state, ...extra }); api.next(); };
 

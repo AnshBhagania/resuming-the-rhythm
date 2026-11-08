@@ -31,7 +31,7 @@ js/log.js, db.js                event log and batched upload to Supabase
 js/settings.js, probe.js        admin-editable settings loader, network/keyboard/audio probes
 js/rng.js                       seeded random numbers (schedules and passages are replayable)
 data/words.json, emails.js      word pool and the 15 placeholder emails
-admin/index.html                admin portal (sessions, issues, Spotify accounts, links, settings)
+admin/index.html                admin portal (sessions, issues, Spotify accounts, participant links, settings, tester)
 supabase/migrations/            database schema and functions
 supabase/functions/             Edge Functions: spotify-token (leases an account), spotify-admin (link/manage accounts)
 docs/                           RUNBOOK.md, TESTING.md, SPOTIFY.md

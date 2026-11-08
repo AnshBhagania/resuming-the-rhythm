@@ -37,7 +37,8 @@ async function boot() {
     seed: seedParam && /^\d+$/.test(seedParam) ? Number(seedParam) >>> 0 : null,
     gazetest: params.get("gazetest") === "1",
     inputtest: params.get("inputtest") === "1",
-    gazeParam: params.get("gaze")   // "0" off, "mouse" test source
+    gazeParam: params.get("gaze"),  // "0" off, "mouse" test source
+    step: params.get("debug") === "1" ? params.get("step") : null   // jump straight to a screen (debug runs only)
   };
 
   const session = createSession({ pid, pidMissing, flags });
@@ -75,7 +76,14 @@ async function boot() {
     session.gaze?.setRecording(["practice", "baseline", "typing"].includes(step.screen) && (session.gazeState === "ready" || session.gazeState === "ready_low_accuracy"));
   } });
   if (flags.debug) setupDebug(session, machine);
-  machine.start();
+  let startAt = 0;                                     // debug runs: step=7, step=baseline, step=typing:2 (typing of block 2) jump straight to a screen
+  if (flags.step) {
+    const [name, blk] = String(flags.step).split(":");
+    const byNumber = /^\d+$/.test(name) ? Number(name) - 1 : -1;
+    const idx = byNumber >= 0 ? byNumber : machine.steps.findIndex((st) => st.screen === name && (!blk || st.block === Number(blk)));
+    if (idx >= 0 && idx < machine.steps.length) startAt = idx;
+  }
+  machine.go(startAt);
 }
 
 function setupDebug(session, machine) {

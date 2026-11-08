@@ -62,6 +62,7 @@
       <button data-tab="accounts">Spotify accounts</button>
       <button data-tab="links">Participant links</button>
       <button data-tab="settings">Settings</button>
+      <button data-tab="tester">Tester</button>
     </nav>
     <span class="spacer"></span>
     <span class="muted" id="who"></span>
@@ -150,6 +151,38 @@
       </div>
     </section>
 
+    <section id="tab-tester" hidden>
+      <div class="card">
+        <h3 style="margin-top:0">Tester: open any screen directly</h3>
+        <p class="muted">Pick the flags, then open a single screen (or the whole study from the start) in a new tab. Test runs are flagged as test data and hidden on the Sessions tab by default.
+        Jumping skips the earlier screens, so choices made there (music, calibration) are missing; synthetic audio and gaze off avoid that. Signed in here, Spotify needs no key.</p>
+        <div class="settingsGrid" id="tstControls">
+          <label><span>Participant id</span><input id="tst_pid" value="T01" size="8"></label>
+          <label><span>Mode order</span><select id="tst_order"><option value="">from participant number</option><option>O1</option><option>O2</option><option>O3</option><option>O4</option><option>O5</option><option>O6</option></select></label>
+          <label><span>Short timings (dryrun)</span><input type="checkbox" id="tst_dryrun" checked></label>
+          <label><span>Debug bar and tools (debug)</span><input type="checkbox" id="tst_debug" checked disabled></label>
+          <label><span>Silent test audio instead of Spotify</span><input type="checkbox" id="tst_synth" checked></label>
+          <label><span>Make test audio audible (sound)</span><input type="checkbox" id="tst_sound"></label>
+          <label><span>Eye tracking</span><select id="tst_gaze"><option value="0">off</option><option value="mouse">mouse stands in for gaze</option><option value="">real webcam</option></select></label>
+          <label><span>Upload nothing (nodb)</span><input type="checkbox" id="tst_nodb" checked></label>
+          <label><span>Seed (optional)</span><input id="tst_seed" type="number" placeholder="random" style="width:110px"></label>
+        </div>
+        <div class="row" style="margin-top:12px"><span class="muted">Link for the whole study:</span> <a class="btn" id="tstFull" target="_blank" rel="noopener">Open from the start</a> <button class="btn" id="tstCopy">Copy link</button></div>
+        <p class="mono muted" id="tstUrl" style="word-break:break-all"></p>
+      </div>
+      <div class="card">
+        <table><thead><tr><th>#</th><th>Screen</th><th>Phase</th><th></th></tr></thead><tbody id="tstRows"></tbody></table>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Stand-alone test pages</h3>
+        <div class="row">
+          <a class="btn" id="tstGaze" target="_blank" rel="noopener">Eye-tracking calibration (webcam)</a>
+          <a class="btn" id="tstGazeMouse" target="_blank" rel="noopener">Calibration (mouse simulated)</a>
+          <a class="btn" id="tstInput" target="_blank" rel="noopener">Physical button test</a>
+        </div>
+      </div>
+    </section>
+
     <section id="tab-accounts" hidden>
       <div class="card">
         <div class="row"><button class="btn" id="refreshAccounts">Refresh</button>
@@ -215,7 +248,8 @@ $("signout").onclick = async () => { await sb.auth.signOut(); location.reload();
 
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
-  for (const t of ["sessions", "issues", "accounts", "links", "settings"]) $("tab-" + t).hidden = t !== b.dataset.tab;
+  for (const t of ["sessions", "issues", "accounts", "links", "settings", "tester"]) $("tab-" + t).hidden = t !== b.dataset.tab;
+  if (b.dataset.tab === "tester") renderTester();
   if (b.dataset.tab === "settings") loadSettings();
   if (b.dataset.tab === "issues") loadIssues();
   if (b.dataset.tab === "accounts") loadAccounts();
@@ -438,6 +472,54 @@ $("saveSettings").onclick = async () => {
   say("Settings saved. New sessions will use them."); loadSettings();
 };
 $("resetSettings").onclick = () => { renderGazeForm(GAZE_DEFAULTS); renderPhysForm(PHYS_DEFAULTS); };
+
+// ---------- tester ----------
+const TEST_SCREENS = {
+  welcome: "Welcome", consent: "Consent", camera: "Camera permission (eye tracking)", precheck: "Pre-check (headphones, keyboard, screen, DRM)",
+  music: "Music choice and sound test", demographics: "About you", gaze: "Eye-tracking calibration", instructions: "Instructions",
+  practice: "Practice (typing + 3 interruptions, one per mode)", baseline: "Baseline typing", debrief: "Final questions", done: "Done and upload"
+};
+function testSteps(order) {
+  const conds = ORDERS[order].split(" ");
+  const steps = ["welcome", "consent", "camera", "precheck", "music", "demographics", "gaze", "instructions", "practice", "baseline"].map(s => ({ screen: s, label: TEST_SCREENS[s], phase: s }));
+  conds.forEach((c, i) => {
+    steps.push({ screen: "blockIntro", label: `Block ${i + 1} intro (${c})`, phase: "block" });
+    steps.push({ screen: "typing", label: `Block ${i + 1} typing with 4 interruptions (${c})`, phase: "block" });
+    steps.push({ screen: "questions", label: `Block ${i + 1} questions (${c})`, phase: "questions" });
+  });
+  steps.push({ screen: "debrief", label: TEST_SCREENS.debrief, phase: "debrief" }, { screen: "done", label: TEST_SCREENS.done, phase: "debrief" });
+  return steps;
+}
+function testUrl(extra = {}) {
+  const p = new URLSearchParams();
+  p.set("pid", $("tst_pid").value.trim() || "T01");
+  p.set("debug", "1");
+  if ($("tst_dryrun").checked) p.set("dryrun", "1");
+  if ($("tst_order").value) p.set("order", $("tst_order").value);
+  if ($("tst_seed").value) p.set("seed", $("tst_seed").value);
+  if ($("tst_synth").checked) { p.set("audio", "synthetic"); if ($("tst_sound").checked) p.set("sound", "1"); }
+  if ($("tst_gaze").value) p.set("gaze", $("tst_gaze").value);
+  if ($("tst_nodb").checked) p.set("nodb", "1");
+  for (const [k, v] of Object.entries(extra)) p.set(k, v);
+  return SITE + "?" + p.toString();
+}
+function renderTester() {
+  const pid = $("tst_pid").value.trim() || "T01";
+  const n = parseInt((/\d+/.exec(pid) || ["1"])[0], 10) || 1;
+  const order = $("tst_order").value || "O" + (((Math.max(1, n) - 1) % 6) + 1);
+  $("tst_sound").disabled = !$("tst_synth").checked;
+  $("tstUrl").textContent = testUrl();
+  $("tstFull").href = testUrl();
+  $("tstRows").replaceChildren(...testSteps(order).map((s, i) => el("tr", {},
+    el("td", { textContent: i + 1 }), el("td", { textContent: s.label }), el("td", { className: "muted", textContent: s.phase }),
+    el("td", {}, el("a", { className: "btn", target: "_blank", rel: "noopener", href: testUrl({ step: i + 1 }), textContent: "Open this screen" })))));
+  const base = new URLSearchParams({ pid: "CAL" }).toString();
+  $("tstGaze").href = SITE + "?" + base + "&gazetest=1";
+  $("tstGazeMouse").href = SITE + "?" + base + "&gazetest=1&gaze=mouse";
+  $("tstInput").href = SITE + "?" + base + "&inputtest=1";
+}
+$("tstControls").addEventListener("input", renderTester);
+$("tstCopy").onclick = () => navigator.clipboard.writeText(testUrl()).then(() => say("Link copied."));
 
 // ---------- participant links ----------
 const ORDERS = { O1: "AUTO DIGI PHYS", O2: "AUTO PHYS DIGI", O3: "DIGI AUTO PHYS", O4: "DIGI PHYS AUTO", O5: "PHYS AUTO DIGI", O6: "PHYS DIGI AUTO" };

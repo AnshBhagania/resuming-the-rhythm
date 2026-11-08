@@ -3,6 +3,7 @@ import { CONFIG, APP_VERSION } from "./config.js";
 import { CONTENT } from "./content.js";
 import { log, setContext } from "./log.js";
 import { randomSeed } from "./rng.js";
+import { el } from "./ui.js";
 import { screens } from "./screens/index.js";
 
 export function resolveOrder(pid, override) {
@@ -81,15 +82,16 @@ export function buildSteps(conditions, flags = {}) {
     add("camera", "consent"); add("gaze", "precheck"); add("done", "debrief");
     return steps;
   }
+  // back: the participant may step back from here (setup only, never into the experiment). skipOnBack: auto-skipped when going back.
   add("welcome", "welcome");
-  add("consent", "consent");
-  add("camera", "consent");
-  add("precheck", "precheck");
-  add("music", "precheck");
-  add("demographics", "precheck");
-  add("gaze", "precheck");
-  add("instructions", "practice");
-  add("practice", "practice");
+  add("consent", "consent", { back: true });
+  add("camera", "consent", { back: true, skipOnBack: true });
+  add("precheck", "precheck", { back: true });
+  add("music", "precheck", { back: true });
+  add("demographics", "precheck", { back: true });
+  add("gaze", "precheck", { back: true, skipOnBack: true });
+  add("instructions", "practice", { back: true });
+  add("practice", "practice", { back: true });   // only the intro card; the button disappears once practice starts
   add("baseline", "baseline");
   conditions.forEach((condition, i) => {
     const block = i + 1;
@@ -105,7 +107,17 @@ export function buildSteps(conditions, flags = {}) {
 export function createMachine({ root, session, onState }) {
   const steps = buildSteps(session.conditions, session.flags);
   let index = -1;
-  const api = { session, cfg: session.cfg, content: CONTENT, step: null, next: () => go(index + 1), go };
+  const api = { session, cfg: session.cfg, content: CONTENT, step: null, next: () => go(index + 1), go, back: () => back(), canBack: () => canBack() };
+
+  const prevIndex = (from) => { for (let i = from - 1; i >= 0; i--) if (!steps[i].skipOnBack) return i; return -1; };
+  const canBack = () => !!steps[index]?.back && prevIndex(index) >= 0;
+  function back() {
+    if (!canBack()) return;
+    const p = prevIndex(index);
+    log("nav_back", { from: steps[index].screen, to: steps[p].screen });
+    if (session.audio?.isPlaying()) session.audio.pause("nav_back");   // e.g. a test sound still playing
+    go(p);
+  }
 
   function go(n) {
     if (n < 0 || n >= steps.length) return;
@@ -117,7 +129,12 @@ export function createMachine({ root, session, onState }) {
     onState?.(step, n, steps.length);
     screens[step.screen](root, api);
     window.scrollTo(0, 0);
+    // "Back" button on setup cards (a screen may have advanced itself: only add it if this step is still current)
+    const card = root.querySelector(".screen");
+    if (index === n && canBack() && card && !card.querySelector(".nav-back")) {
+      card.prepend(el("button", { class: "nav-back", type: "button", onclick: back }, "\u2039 " + CONTENT.ui.back));
+    }
   }
 
-  return { start: () => go(0), go, next: api.next, steps, getIndex: () => index };
+  return { start: () => go(0), go, next: api.next, back, steps, getIndex: () => index };
 }
