@@ -71,3 +71,5 @@ export const CONTENT = {
   },
   noPid: "No participant ID in the link. Using P00. (Expected ?pid=P07)"
 };
+
+CONTENT.typingDone = { title: "Finished", body: "[PLACEHOLDER] Time is up. Well done." };

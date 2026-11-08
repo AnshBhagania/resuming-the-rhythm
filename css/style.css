@@ -75,3 +75,24 @@ input.kb, input[type=number], select, textarea { font: inherit; padding: 6px 10p
 textarea.wide { width: 100%; }
 .word { font-family: var(--mono); font-size: 1.2rem; }
 .screen button.primary { margin-top: 18px; }
+
+/* ---- typing task ---- */
+.typing-view { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.typing-box {
+  background: var(--card); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  padding: 34px 40px; font: 28px/64px var(--mono); transition: opacity .15s, filter .15s;
+}
+.typing-box.aoi-debug { outline: 2px dashed #e91e63; }
+.typing-box.locked { opacity: .4; filter: blur(1.5px); }
+.tw-viewport { height: 192px; overflow: hidden; position: relative; }
+.tw-words { position: relative; transition: transform .12s ease-out; }
+.tw-word { display: inline-block; white-space: nowrap; }
+.tw-ch { color: #9a9a9e; }
+.tw-ch.ok { color: var(--fg); }
+.tw-ch.bad { color: var(--error); }
+.tw-ch.miss { text-decoration: underline; text-decoration-color: var(--error); }
+.tw-caret { box-shadow: -2px 0 0 var(--accent); }
+.tw-end { display: inline-block; width: 0; height: 1em; vertical-align: text-bottom; }
+.tw-end.tw-caret { box-shadow: 2px 0 0 var(--accent); }
+.tw-hint { color: var(--muted); margin: 0; }
+.tw-debug { font: 12px var(--mono); color: var(--muted); margin: 0; }

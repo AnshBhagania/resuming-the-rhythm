@@ -1,5 +1,9 @@
-import { infoScreen, el } from "../ui.js";
-// Stage 2 adds the typing task here.
+import { el, screen, mount, continueBtn } from "../ui.js";
+import { runTypingScreen } from "./typingScreen.js";
+
 export function render(root, api) {
-  infoScreen(root, api, "baseline", el("p", { class: "note" }, `Duration: ${api.cfg.baselineSeconds} s${api.session.flags.dryrun ? " (dry run)" : ""}.`));
+  const c = api.content.baseline;
+  mount(root, screen(c.title, el("p", {}, c.body),
+    el("p", { class: "note" }, `Duration: ${api.cfg.baselineSeconds} s.`),
+    continueBtn(() => runTypingScreen(root, api, { label: "baseline", seed: api.session.seeds.baseline, seconds: api.cfg.baselineSeconds }), "Start")));
 }

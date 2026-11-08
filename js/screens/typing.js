@@ -1,11 +1,7 @@
-import { el, screen, mount, continueBtn } from "../ui.js";
-// Stages 2 to 4 add typing, interruptions and music. Placeholder for the skeleton.
+import { runTypingScreen } from "./typingScreen.js";
+
+// Stage 2: plain timed typing per block. Stage 3 replaces the fixed length with 4 interruptions.
 export function render(root, api) {
-  const c = api.content.typing;
-  const { block, condition } = api.step;
-  const [lo, hi] = api.cfg.interruptionDelaySeconds;
-  mount(root, screen(`${c.title} (block ${block})`,
-    el("p", {}, c.body),
-    el("p", { class: "note" }, `Condition ${condition}. ${api.cfg.interruptionsPerBlock} interruptions, one every ${lo} to ${hi} s.`),
-    continueBtn(api.next)));
+  const { block } = api.step;
+  runTypingScreen(root, api, { label: "block" + block, seed: api.session.seeds["block" + block], seconds: api.cfg.blockPlaceholderSeconds });
 }

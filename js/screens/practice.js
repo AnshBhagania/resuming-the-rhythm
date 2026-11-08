@@ -1,5 +1,10 @@
-import { infoScreen, el } from "../ui.js";
-// Stages 2 to 4 add the practice typing and one practice interruption per mode.
+import { el, screen, mount, continueBtn } from "../ui.js";
+import { runTypingScreen } from "./typingScreen.js";
+
+// Stage 4 adds one practice interruption per mode (flagged practice=true).
 export function render(root, api) {
-  infoScreen(root, api, "practice", el("p", { class: "note" }, `Duration: ${api.cfg.practiceSeconds} s${api.session.flags.dryrun ? " (dry run)" : ""}.`));
+  const c = api.content.practice;
+  mount(root, screen(c.title, el("p", {}, c.body),
+    el("p", { class: "note" }, `Duration: ${api.cfg.practiceSeconds} s.`),
+    continueBtn(() => runTypingScreen(root, api, { label: "practice", seed: api.session.seeds.practice, seconds: api.cfg.practiceSeconds }), "Start")));
 }
