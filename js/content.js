@@ -72,4 +72,20 @@ export const CONTENT = {
   noPid: "No participant ID in the link. Using P00. (Expected ?pid=P07)"
 };
 
+CONTENT.music = {
+  title: "Choose your music",
+  body: "[PLACEHOLDER] Paste a link to a public Spotify playlist you like to work to (at least 30 minutes). Playlists made by Spotify itself cannot be used.",
+  linkLabel: "Spotify playlist link",
+  load: "Load playlist",
+  test: "Play test sound",
+  stop: "Stop",
+  volume: "Set a comfortable volume, then continue. It will stay fixed during the study.",
+  tooShort: "This playlist is too short. Please choose one that is at least 30 minutes long."
+};
+CONTENT.resume = {
+  digiButton: "Resume music",
+  physPrompt: "Press the [button] to resume music",
+  autoNote: "Music resumed"
+};
+
 CONTENT.typingDone = { title: "Finished", body: "[PLACEHOLDER] Time is up. Well done." };

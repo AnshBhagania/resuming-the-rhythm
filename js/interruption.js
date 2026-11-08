@@ -4,6 +4,7 @@
 import { el } from "./ui.js";
 import { log } from "./log.js";
 import { playNotification } from "./sound.js";
+import { onFirstFrame } from "./resume.js";
 
 const MODIFIERS = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock", "AltGraph", "Dead", "Process", "Unidentified", "Compose"]);
 const MAX_REPLY_CHARS = 120;
@@ -49,10 +50,8 @@ export function runInterruption({ task, email, n, k, practice = false, cfg, hook
     }
     update();
 
-    requestAnimationFrame(() => {
-      const r = card.getBoundingClientRect();
-      log("email_shown", { n, email_id: email.id, aoi_prompt: { x: r.left, y: r.top, w: r.width, h: r.height } });
-    });
+    const r = card.getBoundingClientRect();
+    onFirstFrame(() => log("email_shown", { n, email_id: email.id, aoi_prompt: { x: r.left, y: r.top, w: r.width, h: r.height } }));
 
     const timer = setTimeout(() => {
       timedOut = true;

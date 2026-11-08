@@ -11,6 +11,14 @@ export const CONFIG = {
   emailTimeoutSeconds: 60,
   replyMinWords: 3,
   musicFadeInMs: 200,
+  resumeNoteMs: 1500,
+  playTimeoutMs: 15000,
+  minPlaylistMinutes: 30,
+  practiceFirstDelaySeconds: 15,
+  practiceGapSeconds: 15,
+  practiceTailSeconds: 10,
+  supabaseUrl: "https://etdtijvlguuxqvehpdvn.supabase.co",
+  tokenFn: "spotify-token",
   physicalPlaceholderKey: "F9",
   flushIntervalMs: 2000,
   flushMaxEvents: 200,
@@ -20,5 +28,5 @@ export const CONFIG = {
     O3: ["DIGI", "AUTO", "PHYS"], O4: ["DIGI", "PHYS", "AUTO"],
     O5: ["PHYS", "AUTO", "DIGI"], O6: ["PHYS", "DIGI", "AUTO"]
   },
-  dryrun: { baselineSeconds: 20, practiceSeconds: 10, postLastInterruptionSeconds: 10, interruptionDelaySeconds: [8, 12] }
+  dryrun: { baselineSeconds: 20, practiceSeconds: 10, practiceFirstDelaySeconds: 4, practiceGapSeconds: 4, practiceTailSeconds: 3, minPlaylistMinutes: 0, postLastInterruptionSeconds: 10, interruptionDelaySeconds: [8, 12] }
 };

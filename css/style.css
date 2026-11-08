@@ -118,3 +118,15 @@ kbd { font: 13px var(--mono); border: 1px solid #bbb; border-bottom-width: 2px; 
 .em-caret { display: inline-block; width: 2px; height: 1.1em; background: var(--accent); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 .em-hint { margin: 8px 0 0; font-size: .85rem; color: var(--muted); }
+
+/* ---- resumption + music status ---- */
+.resume-prompt { position: fixed; left: 50%; transform: translateX(-50%); width: 220px; height: 56px; z-index: 40; border-radius: 10px; font: 600 15px system-ui; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 12px; animation: em-in .2s ease-out; }
+.resume-btn { background: var(--accent); color: #fff; border: 0; cursor: pointer; }
+.resume-card { background: #fff; color: var(--fg); border: 2px dashed var(--muted); cursor: default; }
+.resume-note { position: fixed; left: 50%; transform: translateX(-50%); bottom: 90px; background: #222; color: #fff; padding: 8px 16px; border-radius: 8px; z-index: 40; }
+.music-status { position: fixed; right: 18px; bottom: 16px; font: 14px system-ui; color: var(--muted); display: none; z-index: 30; }
+.music-status.visible { display: block; }
+.music-status.on { color: #2e7d32; }
+.typing-view { align-self: flex-start; margin-top: 40px; }
+.fieldrow { display: flex; gap: 8px; margin: 10px 0; }
+.fieldrow input[type=text] { flex: 1; font: 14px var(--mono); padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; }

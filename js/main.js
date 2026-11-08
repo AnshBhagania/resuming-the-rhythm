@@ -1,8 +1,9 @@
-import { APP_VERSION } from "./config.js";
+import { APP_VERSION, CONFIG } from "./config.js";
 import { CONTENT } from "./content.js";
 import { createSession, createMachine, sessionStartData } from "./session.js";
 import { log, setContext, downloadLog } from "./log.js";
 import { el, screen, mount } from "./ui.js";
+import { createAudio } from "./audio.js";
 
 const params = new URLSearchParams(location.search);
 const root = document.getElementById("app");
@@ -33,6 +34,9 @@ function boot() {
   };
 
   const session = createSession({ pid, pidMissing, flags });
+  session.studyKey = params.get("k") || "";
+  session.audio = createAudio({ kind: params.get("audio") === "synthetic" ? "synthetic" : "spotify", cfg: session.cfg, pid, studyKey: session.studyKey });
+  flags.audio = session.audio.kind;
   setContext({ session_id: session.id, pid });
   log("session_start", sessionStartData(session));
 

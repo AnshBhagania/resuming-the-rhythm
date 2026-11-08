@@ -67,6 +67,7 @@ export function buildSteps(conditions) {
   add("consent", "consent");
   add("camera", "consent");
   add("precheck", "precheck");
+  add("music", "precheck");
   add("demographics", "precheck");
   add("instructions", "practice");
   add("practice", "practice");
