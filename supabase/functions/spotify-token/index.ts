@@ -10,7 +10,7 @@
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const CLIENT_ID = Deno.env.get("SPOTIFY_CLIENT_ID") ?? "7bb2a29fb58e49989c6e0ffe11162254"; // public
-const STUDY_KEY = Deno.env.get("STUDY_KEY") ?? "";
+const studyKey = () => Deno.env.get("STUDY_KEY") ?? Deno.env.get("STUD_KEY") ?? "";   // STUD_KEY accepted as a typo fallback   // read per request so a newly added secret takes effect immediately
 const ALLOWED = (Deno.env.get("ALLOWED_ORIGINS") ?? "https://anshbhagania.github.io,http://localhost:8765").split(",");
 const LEASE_S = 120;
 
@@ -36,10 +36,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (req.method !== "POST") return json({ error: "method" }, 405, cors);
   if (!ALLOWED.includes(origin)) return json({ error: "origin" }, 403, cors);
-  if (!STUDY_KEY) return json({ error: "not_configured" }, 500, cors);
+  if (!studyKey()) return json({ error: "not_configured" }, 500, cors);
 
   const body = await req.json().catch(() => ({}));
-  if (body.key !== STUDY_KEY) return json({ error: "key" }, 401, cors);
+  if (body.key !== studyKey()) return json({ error: "key" }, 401, cors);
   if (!/^[A-Za-z0-9_-]{1,16}$/.test(body.pid ?? "")) return json({ error: "pid" }, 400, cors);
   if (!/^[0-9a-f-]{36}$/i.test(body.session_id ?? "")) return json({ error: "session_id" }, 400, cors);
   const session = body.session_id as string;
