@@ -4,7 +4,7 @@ Kept up to date by Claude after each stage. **Done** = verified by Claude in a t
 **To do** = needs a person, a real device, real Chrome or real participants. Live site: https://anshbhagania.github.io/resuming-the-rhythm/
 Admin: https://anshbhagania.github.io/resuming-the-rhythm/admin/
 
-Last updated: 2026-11-08 (after Stage 8).
+Last updated: 2026-11-08 (after Stage 8 and the repo cleanup). A shareable, editable copy: https://claude.ai/artifact/NU3zbh614Yn6MVFW186scH
 
 ## 0. Quick start for you (about 15 minutes, in this order)
 1. Sign in to the admin page. Check all five tabs open without an error message.

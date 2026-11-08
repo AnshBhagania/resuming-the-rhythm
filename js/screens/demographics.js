@@ -16,7 +16,7 @@ export function render(root, api) {
     if (it.type === "number") {
       input = el("input", { type: "number", min: "10", max: "100", oninput: (e) => { answers[it.id] = e.target.value; update(); } });
     } else {
-      const opts = it.type === "yesno" ? ["Yes", "No"] : it.options;
+      const opts = it.type === "yesno" ? [api.content.ui.yes, api.content.ui.no] : it.options;
       input = radioGroup("d_" + it.id, opts.map(o => ({ value: o, label: o })), (v) => { answers[it.id] = v; update(); });
     }
     return el("div", { class: "field" }, el("div", { class: "label" }, it.label), input);

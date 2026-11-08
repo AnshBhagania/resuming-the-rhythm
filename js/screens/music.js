@@ -12,7 +12,7 @@ export function render(root, api) {
     log("answer", { id: "music_setup", kind: audio.kind, name: info.name, uri: info.uri, total_ms: info.total_ms, n_tracks: info.n_tracks, volume: audio.volume });
     audio.showStatus(false);
     api.next();
-  }, "Continue", true);
+  }, api.content.ui.continue, true);
 
   const vol = el("input", { type: "range", min: "0", max: "1", step: "0.05", value: String(audio.volume), disabled: true,
     oninput: () => audio.setVolume(Number(vol.value)) });
@@ -32,25 +32,25 @@ export function render(root, api) {
     const input = el("input", { type: "text", placeholder: "https://open.spotify.com/playlist/...", spellcheck: "false", autocomplete: "off" });
     const load = el("button", { class: "primary", onclick: async () => {
       if (!api.session.studyKey) {
-        msg.textContent = "This link is missing its access key. Please ask the researcher for a new link.";
+        msg.textContent = c.missingKey;
         log("audio_error", { kind: "missing_key" });
         return;
       }
-      msg.textContent = "Connecting to Spotify...";
+      msg.textContent = c.connecting;
       try {
         await audio.activate();            // inside the click: unlocks audio playback
         finishLoad(await audio.loadPlaylist(input.value.trim()));
       } catch (e) {
         log("audio_error", { kind: e.code || "setup", message: String(e.message || e) });
         if (e.code === "no_free_account") {
-          msg.textContent = "All Spotify accounts are in use by other sessions. Retrying automatically in 10 s...";
+          msg.textContent = c.allBusy;
           setTimeout(() => load.click(), 10000);
         } else msg.textContent = String(e.message || e);
       }
     } }, c.load);
     rows.push(el("label", {}, c.linkLabel), el("div", { class: "fieldrow" }, input, load));
   } else {
-    rows.push(el("p", { class: "note" }, "Synthetic audio (test mode)."));
+    rows.push(el("p", { class: "note" }, c.syntheticNote));
     audio.loadPlaylist().then(finishLoad);
   }
   rows.push(msg, el("div", { class: "fieldrow" }, testBtn), el("p", {}, c.volume), vol, btn);

@@ -2,7 +2,6 @@
 // Typing stays locked until the audio backend reports playback ("music_play") in every mode.
 import { el } from "./ui.js";
 import { log } from "./log.js";
-import { BOX } from "./typing.js";
 import { meanOfRecent } from "./gaze.js";
 import { createPhysicalSource } from "./input.js";
 
@@ -102,4 +101,3 @@ function listenWrongInputs({ mode, cfg, base, prompt, valid, onValid }) {
   return () => { document.removeEventListener("keydown", handler, true); document.removeEventListener("click", handler, true); };
 }
 
-export { BOX };

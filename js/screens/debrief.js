@@ -17,7 +17,7 @@ export function render(root, api) {
   };
   const rows = modes.map(m => {
     const sel = el("select", { onchange: (e) => { ranks[m] = e.target.value; update(); } },
-      el("option", { value: "" }, "Rank..."),
+      el("option", { value: "" }, c.rankPlaceholder),
       ...[1, 2, 3].map(n => el("option", { value: String(n) }, String(n))));
     return el("div", { class: "field row" }, el("span", { class: "label" }, c.rankLabels[m]), sel);
   });

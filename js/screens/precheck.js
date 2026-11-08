@@ -38,7 +38,6 @@ export function render(root, api) {
     el("label", { class: "check" }, hp, el("span", {}, c.headphones)),
     el("p", {}, c.keyboardPrompt + " ", el("strong", { class: "word" }, c.keyboardWord)),
     kbInput,
-    el("p", { class: "note" }, c.soundNote),
     sizeLine,
     btn));
   update();

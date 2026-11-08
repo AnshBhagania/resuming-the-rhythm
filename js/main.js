@@ -1,4 +1,4 @@
-import { APP_VERSION, CONFIG } from "./config.js";
+import { APP_VERSION } from "./config.js";
 import { CONTENT } from "./content.js";
 import { createSession, createMachine, sessionStartData } from "./session.js";
 import { log, setContext, downloadLog } from "./log.js";

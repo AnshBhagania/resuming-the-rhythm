@@ -11,7 +11,7 @@ const MAX_REPLY_CHARS = 120;
 
 export const countWords = (s) => s.trim().split(/\s+/).filter(Boolean).length;
 
-export function runInterruption({ task, email, n, k, practice = false, cfg, hooks = {} }) {
+export function runInterruption({ task, email, n, k, practice = false, cfg, content, hooks = {} }) {
   return new Promise((resolve) => {
     const st = task.getState();
     log("interruption_start", { n, k, email_id: email.id, practice, word_idx: st.idx, typed_partial: st.typed });
@@ -42,11 +42,11 @@ export function runInterruption({ task, email, n, k, practice = false, cfg, hook
       replyEl.hidden = stage === "choose";
       replyEl.replaceChildren(el("span", {}, reply), el("span", { class: "em-caret" }));
       const words = countWords(reply);
-      if (timedOut) hint.textContent = "Please reply to continue.";
-      else if (stage === "choose") hint.textContent = "Press 1, 2 or 3 to choose an answer.";
+      if (timedOut) hint.textContent = content.email.hintTimeout;
+      else if (stage === "choose") hint.textContent = content.email.hintChoose;
       else hint.textContent = words < cfg.replyMinWords
-        ? `Type a short reply (at least ${cfg.replyMinWords} words), then press Enter.`
-        : "Press Enter to send.";
+        ? content.email.hintReply.replace("{n}", cfg.replyMinWords)
+        : content.email.hintSend;
     }
     update();
 

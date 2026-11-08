@@ -10,7 +10,7 @@ const IDLE_MS = 10000;
 const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock", "AltGraph", "Fn", "FnLock",
   "NumLock", "ScrollLock", "OS", "Hyper", "Super", "Dead", "Process", "Unidentified", "Compose"]);
 
-export function createTypingTask({ parent, passage, seconds, label, debug = false, onEnd, onStart, debugExtra }) {
+export function createTypingTask({ parent, passage, seconds, label, debug = false, onEnd, onStart, debugExtra, hintText = "" }) {
   const words = passage.words;
   const wordEls = [];
   const typedFinal = new Array(words.length).fill(null);
@@ -29,7 +29,7 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
   const box = el("div", { class: "typing-box" + (debug ? " aoi-debug" : "") }, viewport);
   box.style.width = BOX.w + "px";
   box.style.height = BOX.h + "px";
-  const hint = el("p", { class: "tw-hint" }, "Start typing when you are ready.");
+  const hint = el("p", { class: "tw-hint" }, hintText);
   const dbg = el("p", { class: "tw-debug" });
   dbg.hidden = !debug;
   const wrap = el("div", { class: "typing-view" }, box, hint, dbg);

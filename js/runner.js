@@ -28,7 +28,7 @@ export async function runInterruptedTyping(root, api, { label, seed, nWords, del
     const mode = modes[idx];
     const ctxBefore = { condition: api.step.condition };
     setContext({ intr: practice ? 0 : n, condition: mode });
-    await runInterruption({ task, email: emails[idx], n, k, practice, cfg, hooks: { pauseMusic: () => audio.pause("interruption") } });
+    await runInterruption({ task, email: emails[idx], n, k, practice, cfg, content: api.content, hooks: { pauseMusic: () => audio.pause("interruption") } });
     await runResumption({ mode, task, audio, cfg, content: api.content, n, practice, gaze: api.session.gaze });
     setContext({ intr: 0, condition: ctxBefore.condition });
     if (k < total) schedule(delaysS[k] * 1000);

@@ -12,6 +12,6 @@ export function render(root, api) {
     tailS: cfg.practiceTailSeconds, scheduleRule: "practice: fixed gaps"
   });
   mount(root, screen(c.title, el("p", {}, c.body),
-    el("p", { class: "note" }, `Three short interruptions, one per way of resuming the music (${api.session.conditions.join(", ")}).`),
-    continueBtn(start, "Start")));
+    el("p", { class: "note" }, c.note.replace("{modes}", api.session.conditions.join(", "))),
+    continueBtn(start, api.content.ui.start)));
 }

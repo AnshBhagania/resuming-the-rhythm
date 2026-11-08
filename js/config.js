@@ -1,8 +1,7 @@
-export const APP_VERSION = "0.0.1";
+export const APP_VERSION = "0.8.0";
 
 export const CONFIG = {
   baselineSeconds: 120,
-  practiceSeconds: 60,
   blocks: 3,
   interruptionsPerBlock: 4,
   postLastInterruptionSeconds: 60, // typing continues this long after the last interruption so recovery can be measured
@@ -19,7 +18,6 @@ export const CONFIG = {
   supabaseUrl: "https://etdtijvlguuxqvehpdvn.supabase.co",
   tokenFn: "spotify-token",
   supabaseKey: "sb_publishable_TZeG7Ic79emzrJNfU7AzJg_zyRREfxb", // publishable key: safe in the repo (insert-only functions + RLS)
-  spotifyClientId: "7bb2a29fb58e49989c6e0ffe11162254",           // public
   leaseHeartbeatMs: 45000,
   // Defaults for eye tracking; the admin page can override these (see settings.js, table study_settings).
   // Physical resume input (device undecided): key | gamepad | media. Admin-editable. F9 is a placeholder.
@@ -33,5 +31,5 @@ export const CONFIG = {
     O3: ["DIGI", "AUTO", "PHYS"], O4: ["DIGI", "PHYS", "AUTO"],
     O5: ["PHYS", "AUTO", "DIGI"], O6: ["PHYS", "DIGI", "AUTO"]
   },
-  dryrun: { baselineSeconds: 20, practiceSeconds: 10, practiceFirstDelaySeconds: 4, practiceGapSeconds: 4, practiceTailSeconds: 3, postLastInterruptionSeconds: 10, interruptionDelaySeconds: [8, 12] }
+  dryrun: { baselineSeconds: 20, practiceFirstDelaySeconds: 4, practiceGapSeconds: 4, practiceTailSeconds: 3, postLastInterruptionSeconds: 10, interruptionDelaySeconds: [8, 12] }
 };
