@@ -3,6 +3,7 @@
 import { el } from "./ui.js";
 import { log } from "./log.js";
 import { BOX } from "./typing.js";
+import { meanOfRecent } from "./gaze.js";
 
 const MIN_GAP_BELOW_BOX = 250;
 
@@ -13,7 +14,7 @@ export function onFirstFrame(cb) {
   setTimeout(run, 50);   // rAF is throttled in background tabs; do not lose the event
 }
 
-export async function runResumption({ mode, task, audio, cfg, content, n, practice = false }) {
+export async function runResumption({ mode, task, audio, cfg, content, n, practice = false, gaze = null }) {
   const base = { mode, n, practice };
 
   if (mode === "AUTO") {
@@ -44,7 +45,15 @@ export async function runResumption({ mode, task, audio, cfg, content, n, practi
         if (mode === "PHYS" && e.type === "keydown" && e.key === cfg.physicalPlaceholderKey && !e.repeat) return { source: "placeholder_key", key: e.key };
         return false;
       },
-      onValid: (e, info) => { stop(); log("resume_input", { ...base, ...info }, e.timeStamp); resolve(); }
+      onValid: (e, info) => {
+        stop(); log("resume_input", { ...base, ...info }, e.timeStamp);
+        if (gaze && mode === "DIGI") {   // free accuracy check: people look at the button as they click it
+          const m = meanOfRecent(gaze.recent(10)), r = prompt.getBoundingClientRect();
+          if (m) log("gaze_click_check", { ...base, gaze_x: Math.round(m.x), gaze_y: Math.round(m.y), n: m.n,
+            click_x: Math.round(e.clientX), click_y: Math.round(e.clientY), err_px: Math.round(Math.hypot(m.x - (r.left + r.width / 2), m.y - (r.top + r.height / 2))) }, e.timeStamp);
+        }
+        resolve();
+      }
     });
   });
 

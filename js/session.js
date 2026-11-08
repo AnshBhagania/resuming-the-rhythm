@@ -64,19 +64,26 @@ export function sessionStartData(session) {
     window: { w: innerWidth, h: innerHeight },
     device_pixel_ratio: devicePixelRatio,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    aoi: null // filled in once the typing box exists (stage 2)
+    settings: session.settingsInfo ?? null,
+    gaze_kind: session.gaze ? session.gaze.kind : null,
+    aoi: null // typing box / prompt rects are logged in typing_ready, email_shown and resume_prompt_shown
   };
 }
 
-export function buildSteps(conditions) {
+export function buildSteps(conditions, flags = {}) {
   const steps = [];
   const add = (screen, phase, extra = {}) => steps.push({ screen, phase, block: 0, condition: null, ...extra });
+  if (flags.gazetest) {            // calibration test only (opened from the admin page)
+    add("camera", "consent"); add("gaze", "precheck"); add("done", "debrief");
+    return steps;
+  }
   add("welcome", "welcome");
   add("consent", "consent");
   add("camera", "consent");
   add("precheck", "precheck");
   add("music", "precheck");
   add("demographics", "precheck");
+  add("gaze", "precheck");
   add("instructions", "practice");
   add("practice", "practice");
   add("baseline", "baseline");
@@ -92,7 +99,7 @@ export function buildSteps(conditions) {
 }
 
 export function createMachine({ root, session, onState }) {
-  const steps = buildSteps(session.conditions);
+  const steps = buildSteps(session.conditions, session.flags);
   let index = -1;
   const api = { session, cfg: session.cfg, content: CONTENT, step: null, next: () => go(index + 1), go };
 

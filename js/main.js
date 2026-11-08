@@ -6,6 +6,8 @@ import { el, screen, mount } from "./ui.js";
 import { createAudio } from "./audio.js";
 import { startDb } from "./db.js";
 import { setSoundMuted } from "./sound.js";
+import { loadSettings } from "./settings.js";
+import { createGaze } from "./gaze.js";
 
 const params = new URLSearchParams(location.search);
 const root = document.getElementById("app");
@@ -18,7 +20,7 @@ function isMobile() {
   return matchMedia("(pointer: coarse)").matches && !matchMedia("(hover: hover)").matches;
 }
 
-function boot() {
+async function boot() {
   if (isMobile()) {
     mount(root, screen(CONTENT.blocked.title, el("p", {}, CONTENT.blocked.body)));
     return;
@@ -32,10 +34,18 @@ function boot() {
     debug: params.get("debug") === "1",
     dryrun: params.get("dryrun") === "1",
     order: params.get("order") ? params.get("order").toUpperCase() : null,
-    seed: seedParam && /^\d+$/.test(seedParam) ? Number(seedParam) >>> 0 : null
+    seed: seedParam && /^\d+$/.test(seedParam) ? Number(seedParam) >>> 0 : null,
+    gazetest: params.get("gazetest") === "1",
+    gazeParam: params.get("gaze")   // "0" off, "mouse" test source
   };
 
   const session = createSession({ pid, pidMissing, flags });
+  const remote = await loadSettings();                     // admin-editable settings (falls back to defaults after 2.5 s)
+  session.cfg.gaze = { ...remote.gaze };
+  if (flags.gazeParam === "0") session.cfg.gaze.enabled = false;
+  if (flags.gazetest) { session.cfg.gaze.enabled = true; session.cfg.gaze.optional = false; }
+  session.settingsInfo = { source: remote.source, updated_at: remote.updated_at, error: remote.error ?? null, gaze: session.cfg.gaze };
+  session.gaze = session.cfg.gaze.enabled ? createGaze({ kind: flags.gazeParam === "mouse" ? "mouse" : "webgazer", cfg: session.cfg }) : null;
   session.studyKey = params.get("k") || "";
   const synthetic = params.get("audio") === "synthetic";
   const silent = synthetic && params.get("sound") !== "1";   // synthetic test audio is silent unless &sound=1
@@ -52,7 +62,12 @@ function boot() {
   window.addEventListener("blur", () => log("blur"));
   window.addEventListener("focus", () => log("focus"));
 
-  const machine = createMachine({ root, session, onState: (step, i, n) => updateDebug(session, step, i, n) });
+  window.addEventListener("resize", () => log("window_resize", { w: innerWidth, h: innerHeight }));
+  const machine = createMachine({ root, session, onState: (step, i, n) => {
+    updateDebug(session, step, i, n);
+    // Gaze is recorded only while the typing task is on screen.
+    session.gaze?.setRecording(["practice", "baseline", "typing"].includes(step.screen) && (session.gazeState === "ready" || session.gazeState === "ready_low_accuracy"));
+  } });
   if (flags.debug) setupDebug(session, machine);
   machine.start();
 }

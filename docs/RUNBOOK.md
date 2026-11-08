@@ -22,10 +22,24 @@
 | `seed=42` | replay the same passages and schedules |
 | `audio=synthetic` | silent test audio instead of Spotify (add `&sound=1` to hear it) |
 | `nodb=1` | do not upload anything |
+| `gaze=0` | skip eye tracking (no camera step) |
+| `gaze=mouse` | the mouse pointer stands in for gaze, for testing without a camera |
+| `gazetest=1` | only camera permission + calibration + validation, shows the error per point (admin page links to it) |
 
 ## Local testing
 Serve the repo with any static server on **127.0.0.1** (not localhost; browsers cache modules aggressively there), e.g.
 `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?pid=T01&debug=1&dryrun=1&audio=synthetic&nodb=1`.
+
+## Eye tracking
+- One calibration (9 clicked points) and one validation (5 looked-at points) before practice, about 40 s. Nothing is recalibrated during the
+  experiment; after calibration the model stops learning from the mouse. Camera video never leaves the browser, only screen coordinates are logged.
+- Admin page **Settings** tab: turn it on/off, make it optional, grid size, clicks per point, validation time, accepted error (px), max attempts,
+  sampling rate. Saved values apply to sessions that start afterwards, and each session logs the values it ran with.
+  **Test calibration** buttons open the calibration test on the pilot laptop and show the error per point.
+- Logged: `gaze_state`, `calib_point`, `calib_validation`, `gaze_ready`, `gaze` (batches of `[t, x, y, aoi]`, aoi T text / P prompt / O other or no face),
+  `gaze_lost`, `gaze_back`, `window_resize`, and `gaze_click_check` (gaze vs the DIGI button at each click, a free accuracy check).
+- Expect roughly 100 to 250 px error with a webcam, if the participant keeps still. Pilot it: if the validation error is often above the limit,
+  raise the limit or enlarge the areas of interest in analysis.
 
 ## Data
 - Tables: `sessions`, `events` (see `supabase/migrations/`). Export from the admin page (JSON or CSV per session) or from the Supabase

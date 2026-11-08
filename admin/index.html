@@ -36,6 +36,10 @@
     tr.issue td { background:rgba(198,40,40,.10); }
     #msg { min-height:20px; } .err { color:var(--bad); }
     [hidden] { display:none !important; }
+    .settingsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px 24px; }
+    .settingsGrid label { display:flex; justify-content:space-between; gap:10px; align-items:center; }
+    .settingsGrid input[type=number] { width:90px; }
+    a.btn { text-decoration:none; display:inline-block; }
   </style>
 </head>
 <body>
@@ -57,6 +61,7 @@
       <button data-tab="issues">Issues</button>
       <button data-tab="accounts">Spotify accounts</button>
       <button data-tab="links">Participant links</button>
+      <button data-tab="settings">Settings</button>
     </nav>
     <span class="spacer"></span>
     <span class="muted" id="who"></span>
@@ -110,6 +115,29 @@
         <p class="muted">One link per participant. The mode order is assigned from the number (P01 = O1 ... P06 = O6, P07 = O1 ...), so each of the 6 orders is used evenly.
         The study key is only used to build the links in your browser and is not sent anywhere.</p>
         <table><thead><tr><th>Participant</th><th>Order</th><th>Link</th><th></th></tr></thead><tbody id="linkRows"></tbody></table>
+      </div>
+    </section>
+
+    <section id="tab-settings" hidden>
+      <div class="card">
+        <h3 style="margin-top:0">Eye tracking</h3>
+        <p class="muted">Applies to sessions that start after you save. Each session logs the settings it ran with (<code>session_start</code>, field <code>settings</code>).
+        Changing these between participants makes sessions less comparable, so settle them during piloting.</p>
+        <div id="gazeForm" class="settingsGrid"></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn primary" id="saveSettings">Save</button>
+          <button class="btn" id="resetSettings">Reset to defaults</button>
+          <span class="muted" id="settingsInfo"></span>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Test calibration</h3>
+        <p class="muted">Runs only the camera permission, calibration and validation, with the current saved settings, and shows the error per point. Use it on the pilot laptops.
+        The result is also saved as a session flagged <code>gazetest</code>.</p>
+        <div class="row">
+          <a class="btn" id="calReal" target="_blank" rel="noopener">Open real calibration test</a>
+          <a class="btn" id="calMouse" target="_blank" rel="noopener">Open mouse-simulated test (no camera)</a>
+        </div>
       </div>
     </section>
 
@@ -178,7 +206,8 @@ $("signout").onclick = async () => { await sb.auth.signOut(); location.reload();
 
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
-  for (const t of ["sessions", "issues", "accounts", "links"]) $("tab-" + t).hidden = t !== b.dataset.tab;
+  for (const t of ["sessions", "issues", "accounts", "links", "settings"]) $("tab-" + t).hidden = t !== b.dataset.tab;
+  if (b.dataset.tab === "settings") loadSettings();
   if (b.dataset.tab === "issues") loadIssues();
   if (b.dataset.tab === "accounts") loadAccounts();
 });
@@ -336,6 +365,53 @@ async function handleSpotifyReturn() {
   } catch (e) { say("Link failed: " + e.message, true); }
   ["sp_verifier", "sp_state", "sp_label"].forEach(k => sessionStorage.removeItem(k));
 }
+
+// ---------- settings (eye tracking) ----------
+const GAZE_FIELDS = [
+  ["enabled", "Eye tracking on", "bool", null],
+  ["optional", "Participants may skip it", "bool", null],
+  ["gridCols", "Calibration grid columns", "num", [2, 5]],
+  ["gridRows", "Calibration grid rows", "num", [2, 5]],
+  ["clicksPerPoint", "Clicks per calibration point", "num", [1, 10]],
+  ["validationDwellMs", "Validation time per point (ms)", "num", [1000, 6000]],
+  ["validationSettleMs", "Ignored at start of each point (ms)", "num", [200, 2000]],
+  ["maxErrorPx", "Accept if mean error is at most (px)", "num", [50, 800]],
+  ["maxAttempts", "Max calibration attempts", "num", [1, 5]],
+  ["sampleCapHz", "Max logged gaze samples per second", "num", [5, 60]]
+];
+const GAZE_DEFAULTS = { enabled: true, optional: true, gridCols: 3, gridRows: 3, clicksPerPoint: 5, validationDwellMs: 2500, validationSettleMs: 1000, maxErrorPx: 250, maxAttempts: 3, sampleCapHz: 30 };
+let currentSettings = {};
+function renderGazeForm(g) {
+  $("gazeForm").replaceChildren(...GAZE_FIELDS.map(([key, label, type, range]) => {
+    const input = el("input", { type: type === "bool" ? "checkbox" : "number", id: "gz_" + key });
+    if (type === "bool") input.checked = !!g[key]; else { input.value = g[key]; input.min = range[0]; input.max = range[1]; }
+    return el("label", {}, el("span", { textContent: label }), input);
+  }));
+}
+async function loadSettings() {
+  const { data, error } = await sb.from("study_settings").select("settings,updated_at,updated_by").eq("id", 1).single();
+  if (error) { say("Could not load settings: " + error.message, true); return; }
+  currentSettings = data.settings || {};
+  renderGazeForm({ ...GAZE_DEFAULTS, ...(currentSettings.gaze || {}) });
+  $("settingsInfo").textContent = data.updated_at ? `Last saved ${fmt(data.updated_at)} by ${data.updated_by || "?"}` : "";
+  $("calReal").href = SITE + "?pid=CAL&gazetest=1";
+  $("calMouse").href = SITE + "?pid=CAL&gazetest=1&gaze=mouse";
+}
+function readGazeForm() {
+  const g = {};
+  for (const [key, , type, range] of GAZE_FIELDS) {
+    const input = $("gz_" + key);
+    g[key] = type === "bool" ? input.checked : Math.min(range[1], Math.max(range[0], Math.round(+input.value || GAZE_DEFAULTS[key])));
+  }
+  return g;
+}
+$("saveSettings").onclick = async () => {
+  const settings = { ...currentSettings, gaze: readGazeForm() };
+  const { error } = await sb.from("study_settings").update({ settings }).eq("id", 1);
+  if (error) { say("Save failed: " + error.message, true); return; }
+  say("Settings saved. New sessions will use them."); loadSettings();
+};
+$("resetSettings").onclick = () => renderGazeForm(GAZE_DEFAULTS);
 
 // ---------- participant links ----------
 const ORDERS = { O1: "AUTO DIGI PHYS", O2: "AUTO PHYS DIGI", O3: "DIGI AUTO PHYS", O4: "DIGI PHYS AUTO", O5: "PHYS AUTO DIGI", O6: "PHYS DIGI AUTO" };

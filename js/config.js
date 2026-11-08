@@ -21,6 +21,8 @@ export const CONFIG = {
   supabaseKey: "sb_publishable_TZeG7Ic79emzrJNfU7AzJg_zyRREfxb", // publishable key: safe in the repo (insert-only functions + RLS)
   spotifyClientId: "7bb2a29fb58e49989c6e0ffe11162254",           // public
   leaseHeartbeatMs: 45000,
+  // Defaults for eye tracking; the admin page can override these (see settings.js, table study_settings).
+  gaze: { enabled: true, optional: true, gridCols: 3, gridRows: 3, clicksPerPoint: 5, validationDwellMs: 2500, validationSettleMs: 1000, maxErrorPx: 250, maxAttempts: 3, sampleCapHz: 30 },
   physicalPlaceholderKey: "F9",
   flushIntervalMs: 2000,
   flushMaxEvents: 200,

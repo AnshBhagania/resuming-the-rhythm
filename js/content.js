@@ -9,7 +9,31 @@ export const CONTENT = {
     version: "v0-placeholder"
   },
 
-  camera: { title: "Camera", body: "[PLACEHOLDER] Camera permission explanation. (Camera is not used yet.)" },
+  camera: {
+    title: "Camera",
+    body: "[PLACEHOLDER] We would like to use your webcam to estimate where on the screen you are looking. No video or images are recorded or stored, only screen coordinates.",
+    allow: "Allow camera",
+    skip: "Continue without eye tracking",
+    asking: "Please allow camera access in your browser...",
+    deniedOptional: "Camera access was not given. You can try again or continue without eye tracking.",
+    deniedRequired: "Camera access is needed for this study. Please allow it in your browser settings and try again."
+  },
+  gaze: {
+    title: "Eye tracking setup",
+    body: "[PLACEHOLDER] This takes about 40 seconds and is done only once. You will click a series of dots while looking at each one, then look at a few dots without clicking.",
+    posture: "Sit about an arm's length from the screen, face the camera in even light, and keep your head as still as you can for the rest of the study.",
+    start: "Start",
+    loading: "Starting the camera...",
+    calibrateHint: "Look at the dot and click it {n} times",
+    validateHint: "Now just look at the dot, without clicking",
+    ok: "Eye tracking is ready.",
+    low: "The accuracy was lower than we would like. Sit still, face the screen in even light, and try again.",
+    noFace: "We could not see your face clearly. Check the lighting and that the camera is not covered, then try again.",
+    retry: "Calibrate again",
+    cont: "Continue",
+    failed: "The camera could not be started. You can continue without eye tracking.",
+    notAvailable: "Eye tracking is not available in this run (camera not permitted, or disabled)."
+  },
 
   precheck: {
     title: "Before we start",
