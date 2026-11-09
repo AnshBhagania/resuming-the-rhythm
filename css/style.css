@@ -185,7 +185,7 @@ kbd { font: 600 13px var(--mono); min-width: 26px; text-align: center; border: 1
 .em-reply { border: 1.5px solid var(--field); border-radius: 10px; padding: 10px 12px; font: 16px var(--mono); min-height: 44px; word-break: break-all; }
 .em-caret { display: inline-block; width: 2px; height: 1.1em; background: var(--accent); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
-.em-hint { margin: 10px 0 0; font-size: .88rem; color: var(--muted); }
+.em-hint { margin: 10px 0 0; font-size: .92rem; font-weight: 600; color: var(--accent-strong); }
 
 /* ---- resumption prompts + music status (sizes and positions are fixed by the study design: do not change) ---- */
 .resume-prompt { position: fixed; left: 50%; transform: translateX(-50%) scale(var(--s, 1)); transform-origin: top center; width: 220px; height: 56px; z-index: 40; border-radius: 12px; font: 600 15px system-ui; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 12px; animation: resume-in .2s ease-out; }
@@ -231,3 +231,13 @@ kbd { font: 600 13px var(--mono); min-width: 26px; text-align: center; border: 1
 /* ---- camera check ---- */
 .cam-box { margin: 12px 0 4px; }
 .cam-preview { display: block; width: 320px; max-width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; background: #14161a; transform: scaleX(-1); border: 1px solid var(--line); }
+
+/* ---- email answer steps and clickable options ---- */
+.em-steps { list-style: none; counter-reset: st; margin: 0 0 12px; padding: 10px 14px; background: #f4f6fa; border-radius: 10px; display: grid; gap: 4px; font-size: .92rem; }
+.em-steps li { counter-increment: st; display: flex; gap: 10px; color: var(--muted); }
+.em-steps li::before { content: counter(st); flex: none; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--field); font: 600 12px system-ui; background: #fff; }
+.em-steps li.active { color: var(--fg); font-weight: 600; }
+.em-steps li.active::before { background: var(--accent); border-color: var(--accent); color: #fff; }
+.em-steps li.done::before { content: "\2713"; background: var(--ok); border-color: var(--ok); color: #fff; }
+.em-steps li.done { color: var(--muted); }
+.em-opt { user-select: none; }

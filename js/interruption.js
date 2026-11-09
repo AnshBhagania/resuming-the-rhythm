@@ -22,9 +22,22 @@ export function runInterruption({ task, email, n, k, practice = false, cfg, cont
     playNotification();                 // 3. notification sound
     log("notification_sound");
 
-    let stage = "choose", option = null, reply = "", timedOut = false, done = false;
+    let stage = "choose", option = null, reply = "", timedOut = false, done = false, tooShort = false, nudge = false, clicks = 0;
+    let lastPointer = null;
 
-    const optEls = email.options.map((o, i) => el("li", { class: "em-opt" }, el("kbd", {}, String(i + 1)), el("span", {}, o)));
+    // Keyboard only, so every mode starts its resume step with the hands on the keyboard. A click does not select, but it is
+    // not silent: the card says to use the number key, and the click is logged (clicks, cursor position).
+    const optEls = email.options.map((o, i) => el("li", { class: "em-opt", onclick: (e) => {
+        if (done) return;
+        clicks++; nudge = true;
+        log("email_click", { n, option: i + 1, stage, x: Math.round(e.clientX), y: Math.round(e.clientY) }, e.timeStamp);
+        update();
+      } },
+      el("kbd", {}, String(i + 1)), el("span", {}, o)));
+    const steps = el("ol", { class: "em-steps" },
+      el("li", { class: "s1" }, content.email.stepChoose),
+      el("li", { class: "s2" }, content.email.stepReply.replace("{n}", cfg.replyMinWords)),
+      el("li", { class: "s3" }, content.email.stepSend));
     const replyEl = el("div", { class: "em-reply" });
     const hint = el("p", { class: "em-hint" });
     const card = el("div", { class: "email-card" },
@@ -33,6 +46,7 @@ export function runInterruption({ task, email, n, k, practice = false, cfg, cont
         el("div", { class: "em-subject" }, email.subject)),
       el("p", { class: "em-body" }, email.body),
       el("p", { class: "em-question" }, email.question),
+      steps,
       el("ul", { class: "em-opts" }, ...optEls),
       replyEl, hint);
     const overlay = el("div", { class: "email-overlay" }, card);
@@ -42,12 +56,19 @@ export function runInterruption({ task, email, n, k, practice = false, cfg, cont
       optEls.forEach((li, i) => li.classList.toggle("sel", option === i));
       replyEl.hidden = stage === "choose";
       replyEl.replaceChildren(el("span", {}, reply), el("span", { class: "em-caret" }));
-      const words = countWords(reply);
-      if (timedOut) hint.textContent = content.email.hintTimeout;
-      else if (stage === "choose") hint.textContent = content.email.hintChoose;
-      else hint.textContent = words < cfg.replyMinWords
-        ? content.email.hintReply.replace("{n}", cfg.replyMinWords)
-        : content.email.hintSend;
+      const words = countWords(reply), enough = words >= cfg.replyMinWords;
+      const state = (cls, on, finished) => { const li = steps.querySelector("." + cls); li.classList.toggle("active", on); li.classList.toggle("done", finished); };
+      state("s1", stage === "choose", option !== null);
+      state("s2", stage === "reply" && !enough, stage === "reply" && enough);
+      state("s3", stage === "reply" && enough, false);
+      hint.textContent = timedOut ? content.email.hintTimeout : (tooShort && !enough ? content.email.hintTooShort.replace("{n}", cfg.replyMinWords) : nudge ? (stage === "choose" ? content.email.hintClick : content.email.hintClickLater) : "");
+      hint.hidden = !hint.textContent;
+    }
+
+    function choose(i, t) {
+      option = i; stage = "reply"; nudge = false;
+      log("email_option", { n, option: i + 1, option_text: email.options[i] }, t);
+      update();
     }
     update();
 
@@ -70,23 +91,20 @@ export function runInterruption({ task, email, n, k, practice = false, cfg, cont
       log("email_key", { key: k_, code: e.code, stage, repeat: e.repeat }, t);
 
       if (stage === "choose") {
-        if (k_ === "1" || k_ === "2" || k_ === "3") {
-          option = Number(k_) - 1;
-          stage = "reply";
-          log("email_option", { n, option: option + 1, option_text: email.options[option] }, t);
-          update();
-        }
+        if (k_ === "1" || k_ === "2" || k_ === "3") choose(Number(k_) - 1, t);
         return;
       }
       // reply stage
       if (k_ === "Enter") {
-        if (countWords(reply) < cfg.replyMinWords) return;
+        if (countWords(reply) < cfg.replyMinWords) { tooShort = true; update(); return; }
         done = true;
         clearTimeout(timer);
         document.removeEventListener("keydown", onKey, true);
+        document.removeEventListener("mousemove", onMove, true);
         log("reply_sent", {
           n, k, practice, email_id: email.id, option: option + 1, option_text: email.options[option],
-          reply, reply_words: countWords(reply), timed_out: timedOut
+          reply, reply_words: countWords(reply), timed_out: timedOut,
+          option_via: "key", clicks, cursor: lastPointer
         }, t);
         overlay.remove();
         resolve({ replyT: t, timedOut });
@@ -102,6 +120,8 @@ export function runInterruption({ task, email, n, k, practice = false, cfg, cont
       }
       if (k_.length === 1 && reply.length < MAX_REPLY_CHARS) { reply += k_; update(); }
     }
+    const onMove = (e) => { lastPointer = { x: Math.round(e.clientX), y: Math.round(e.clientY) }; };
+    document.addEventListener("mousemove", onMove, true);
     document.addEventListener("keydown", onKey, true);
   });
 }

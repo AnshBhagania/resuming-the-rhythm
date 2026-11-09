@@ -134,9 +134,12 @@ export const CONTENT = {
 
   // The email pop-up during typing
   email: {
-    hintChoose: "Press 1, 2 or 3 to choose an answer.",
-    hintReply: "Type a short reply (at least {n} words), then press Enter.",
-    hintSend: "Press Enter to send.",
+    stepChoose: "Choose an answer: press 1, 2 or 3 on your keyboard.",
+    hintClick: "Clicking does not select. Please press the number key 1, 2 or 3 on your keyboard.",
+    hintClickLater: "Your answer is already chosen. Type your reply and press Enter.",
+    stepReply: "Type a short reply (at least {n} words).",
+    stepSend: "Press Enter to send.",
+    hintTooShort: "Please write at least {n} words before sending.",
     hintTimeout: "Please reply to continue."
   },
 
