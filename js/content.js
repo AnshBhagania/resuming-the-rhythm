@@ -99,7 +99,13 @@ export const CONTENT = {
     retry: "Calibrate again",
     cont: "Continue",
     failed: "The camera could not be started. You can continue without eye tracking.",
-    notAvailable: "Eye tracking is not available in this run (camera not permitted, or disabled)."
+    notAvailable: "Eye tracking is not available in this run (camera not permitted, or disabled).",
+    mouseBanner: "TEST MODE: your mouse pointer simulates eye tracking. No camera is used.",
+    verdictGood: "Good: accurate enough to tell the text box from the resume prompt.",
+    verdictBorderline: "Borderline: usable for the text box versus the prompt, but not for finer detail. Try better light and a steadier head.",
+    verdictPoor: "Too inaccurate for reliable use. Check light, distance and that your whole face is visible, then calibrate again.",
+    verdictNone: "No face was seen, so nothing could be measured. Check that the camera is uncovered and your face is lit.",
+    howToRead: "How to read this: each blue dot is a spot you were asked to look at, each orange dot is where the tracker thought you looked (the median of its samples), and the line between them is the error. Samples is how many gaze readings were captured at that spot (about 30 a second); \"no data\" means no face was seen there.",
   },
 
   instructions: { title: "Instructions", body: "[PLACEHOLDER] Task instructions." },

@@ -32,6 +32,11 @@ Serve the repo with any static server on **127.0.0.1** (not localhost; browsers 
   **Test calibration** buttons open the calibration test on the pilot laptop and show the error per point.
 - Logged: `gaze_state`, `calib_point`, `calib_validation`, `gaze_ready`, `gaze` (batches of `[t, x, y, aoi]`, aoi T text / P prompt / O other or no face),
   `gaze_lost`, `gaze_back`, `window_resize`, and `gaze_click_check` (gaze vs the DIGI button at each click, a free accuracy check).
+- **Reading the calibration test:** the result page shows a verdict, a map and a table. Blue dots are the spots you were asked to look at, orange dots are where the tracker
+  thought you looked (median of its samples), the line is the error, and "off by" shows the direction. "Samples" is the number of gaze readings at that spot (about 30 a second);
+  "no data" means no face was seen. Verdicts: **good** up to 150 px (the text box can be told apart from the resume prompt, which sits about 250 px below it), **borderline**
+  up to your accepted limit (default 250 px), **poor** above. First real run (Windows Chrome): 5 points, 45 samples each, mean error 123 px, passed.
+- The camera and calibration screens in the admin Tester always use the real webcam. The mouse-simulated mode (`gaze=mouse`) is clearly marked "TEST MODE" and never uses the camera.
 - Expect roughly 100 to 250 px error with a webcam, if the participant keeps still. Pilot it: if the validation error is often above the limit,
   raise the limit or enlarge the areas of interest in analysis.
 

@@ -214,3 +214,12 @@ kbd { font: 600 13px var(--mono); min-width: 26px; text-align: center; border: 1
 
 /* ---- eye tracking indicator ---- */
 .gaze-status { position: fixed; left: 18px; bottom: 16px; z-index: 30; font: 600 13px system-ui; color: var(--ok); background: rgba(255,255,255,.9); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; }
+
+/* ---- calibration test result ---- */
+.sim-banner { background: #fff4d6; color: #6b4300; border: 1px solid #e6c35c; border-radius: 10px; padding: 10px 14px; font-weight: 600; }
+.gz-verdict { font-size: 1.15rem; font-weight: 650; padding: 10px 14px; border-radius: 10px; }
+.gz-verdict.good { background: #e3f4e8; color: #14612b; } .gz-verdict.borderline { background: #fff4d6; color: #6b4300; } .gz-verdict.poor, .gz-verdict.none { background: #fde8e8; color: #9b1c1c; }
+.gz-map-wrap { margin: 10px 0; } .gz-map { width: 100%; max-width: 520px; height: auto; display: block; }
+.gz-map-bg { fill: #f6f7f9; stroke: #c9ced6; } .gz-map-line { stroke: #8a919c; stroke-width: 1.5; stroke-dasharray: 3 3; }
+.gz-map-target { fill: #1e88e5; } .gz-map-pred { fill: #ef6c00; } .gz-map-text { font: 11px system-ui; fill: #5b616a; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: baseline; } .dot.t { background: #1e88e5; } .dot.p { background: #ef6c00; }

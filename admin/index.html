@@ -167,7 +167,7 @@
           <label><span>Debug bar and tools (debug)</span><input type="checkbox" id="tst_debug" checked disabled></label>
           <label><span>Silent test audio instead of Spotify</span><input type="checkbox" id="tst_synth" checked></label>
           <label><span>Make test audio audible (sound)</span><input type="checkbox" id="tst_sound"></label>
-          <label><span>Eye tracking</span><select id="tst_gaze"><option value="0">off</option><option value="mouse">mouse stands in for gaze</option><option value="">real webcam</option></select></label>
+          <label><span>Eye tracking</span><select id="tst_gaze"><option value="0">off (the camera and calibration rows still use the real webcam)</option><option value="mouse">mouse pointer simulates gaze (no camera is used)</option><option value="">real webcam everywhere</option></select></label>
           <label><span>Upload nothing (nodb)</span><input type="checkbox" id="tst_nodb" checked></label>
           <label><span>Seed (optional)</span><input id="tst_seed" type="number" placeholder="random" style="width:110px"></label>
         </div>
@@ -529,10 +529,10 @@ function renderTester() {
     // the camera and calibration screens only exist when eye tracking is on: force it (mouse stands in if "off" is chosen)
     const eye = s.screen === "camera" || s.screen === "gaze";
     const forced = eye && gazeSel === "0";
-    const url = testUrl({ step: i + 1, ...(eye ? { gaze: gazeSel === "0" ? "mouse" : gazeSel } : {}) });
+    const url = testUrl({ step: i + 1, ...(eye ? { gaze: gazeSel === "0" ? "" : gazeSel } : {}) });   // "" = no gaze parameter = the real webcam
     return el("tr", {},
       el("td", { textContent: i + 1 }),
-      el("td", {}, s.label, forced ? el("span", { className: "muted", textContent: "  (eye tracking switched on for this screen, mouse simulated)" }) : null),
+      el("td", {}, s.label, forced ? el("span", { className: "muted", textContent: "  (real webcam is used for this screen)" }) : null),
       el("td", { className: "muted", textContent: s.phase }),
       el("td", {}, el("a", { className: "btn", target: "_blank", rel: "noopener", href: url, textContent: "Open this screen" })));
   }));

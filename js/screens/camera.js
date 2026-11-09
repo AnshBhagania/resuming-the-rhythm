@@ -25,5 +25,5 @@ export function render(root, api) {
     }
   } }, c.allow);
   const skip = el("button", { class: "primary", hidden: !g.optional, onclick: () => done("declined") }, c.skip);
-  mount(root, screen(c.title, el("p", {}, c.body), msg, allow, " ", skip));
+  mount(root, screen(c.title, s.gaze.kind === "mouse" ? el("p", { class: "sim-banner" }, api.content.gaze.mouseBanner) : null, el("p", {}, c.body), msg, allow, " ", skip));
 }
