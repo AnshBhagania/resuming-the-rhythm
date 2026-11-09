@@ -24,7 +24,14 @@ export function render(root, api) {
     allow.disabled = true; msg.textContent = c.asking;
     if (s.gaze.kind === "mouse") { finish("permitted", { source: "mouse" }); return; }
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+      if (!navigator.mediaDevices?.getUserMedia) { const err = new Error("This browser cannot use the camera on this page"); err.name = "NotSupportedError"; throw err; }
+      // Ask for a size first; if the camera refuses the size, ask again with no requirements (the size is not essential).
+      try { stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } }); }
+      catch (e1) {
+        if (e1.name !== "OverconstrainedError" && e1.name !== "NotReadableError" && e1.name !== "AbortError") throw e1;
+        log("gaze_state", { state: "camera_retry_plain", name: e1.name, message: e1.message });
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
       video.srcObject = stream;
       await video.play().catch(() => {});
       log("gaze_state", { state: "camera_preview_on", label: stream.getVideoTracks()[0]?.label?.slice(0, 60) });
@@ -32,8 +39,10 @@ export function render(root, api) {
       previewBox.hidden = false; allow.hidden = true; ok.hidden = false;
     } catch (e) {
       log("gaze_state", { state: "denied", name: e.name, message: e.message });
-      msg.textContent = g.optional ? c.deniedOptional : c.deniedRequired;
-      allow.disabled = false;
+      const why = c.errors?.[e.name] ?? c.errors?.other;
+      msg.textContent = (why ? why + " " : "") + (g.optional ? c.deniedOptional : c.deniedRequired);
+      msg.append(el("small", { class: "note" }, ` (${e.name})`));
+      allow.disabled = false; allow.textContent = c.retry ?? c.allow;
     }
   } }, c.allow);
   const ok = el("button", { class: "primary", hidden: true, onclick: () => finish("permitted", { preview_confirmed: true }) }, c.previewOk);
