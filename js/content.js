@@ -38,6 +38,9 @@ export const CONTENT = {
     allow: "Allow camera",
     skip: "Continue without eye tracking",
     asking: "Please allow camera access in your browser...",
+    previewOn: "The camera is on. Check that you can see yourself.",
+    previewHint: "This is only a check that your camera works. Nothing is recorded or stored. Sit about an arm's length from the screen, face it, and make sure your face is lit and fully visible.",
+    previewOk: "I can see myself, continue",
     deniedOptional: "Camera access was not given. You can try again or continue without eye tracking.",
     deniedRequired: "Camera access is needed for this study. Please allow it in your browser settings and try again."
   },

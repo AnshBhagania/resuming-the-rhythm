@@ -25,6 +25,7 @@ Serve the repo with any static server on **127.0.0.1** (not localhost; browsers 
 `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?pid=T01&debug=1&dryrun=1&audio=synthetic&nodb=1`.
 
 ## Eye tracking
+- The camera screen shows a mirrored preview (on screen only, never recorded or sent) so the participant can confirm the camera works and their face is visible; it is released when they continue. Calibration then starts the camera again.
 - One calibration (9 clicked points) and one validation (5 looked-at points) before practice, about 40 s. Nothing is recalibrated during the
   experiment; after calibration the model stops learning from the mouse. Camera video never leaves the browser, only screen coordinates are logged.
 - Admin page **Settings** tab: turn it on/off, make it optional, grid size, clicks per point, validation time, accepted error (px), max attempts,

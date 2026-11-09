@@ -85,7 +85,7 @@ export function buildSteps(conditions, flags = {}) {
   // back: the participant may step back from here (setup only, never into the experiment). skipOnBack: auto-skipped when going back.
   add("welcome", "welcome");
   add("consent", "consent", { back: true });
-  add("camera", "consent", { back: true, skipOnBack: true });
+  add("camera", "consent", { back: true });   // reachable with Back, so the participant can check the camera again
   add("precheck", "precheck", { back: true });
   add("music", "precheck", { back: true });
   add("demographics", "precheck", { back: true });
@@ -107,7 +107,9 @@ export function buildSteps(conditions, flags = {}) {
 export function createMachine({ root, session, onState }) {
   const steps = buildSteps(session.conditions, session.flags);
   let index = -1;
-  const api = { session, cfg: session.cfg, content: CONTENT, step: null, next: () => go(index + 1), go, back: () => back(), canBack: () => canBack() };
+  const leaveHooks = [];   // cleanup callbacks of the screen being left (e.g. release a camera preview)
+  const api = { session, cfg: session.cfg, content: CONTENT, step: null, direction: "forward", next: () => go(index + 1), go, back: () => back(), canBack: () => canBack(),
+    onLeave: (fn) => leaveHooks.push(fn) };
 
   const prevIndex = (from) => { for (let i = from - 1; i >= 0; i--) if (!steps[i].skipOnBack) return i; return -1; };
   const canBack = () => !!steps[index]?.back && prevIndex(index) >= 0;
@@ -116,11 +118,13 @@ export function createMachine({ root, session, onState }) {
     const p = prevIndex(index);
     log("nav_back", { from: steps[index].screen, to: steps[p].screen });
     if (session.audio?.isPlaying()) session.audio.pause("nav_back");   // e.g. a test sound still playing
-    go(p);
+    api.direction = "back";
+    try { go(p); } finally { api.direction = "forward"; }
   }
 
   function go(n) {
     if (n < 0 || n >= steps.length) return;
+    leaveHooks.splice(0).forEach((fn) => { try { fn(); } catch (e) { /* cleanup must never block navigation */ } });
     index = n;
     document.body.classList.remove("typing-active");
     const step = steps[n];

@@ -224,3 +224,7 @@ kbd { font: 600 13px var(--mono); min-width: 26px; text-align: center; border: 1
 .gz-map-bg { fill: #f6f7f9; stroke: #c9ced6; } .gz-map-line { stroke: #8a919c; stroke-width: 1.5; stroke-dasharray: 3 3; }
 .gz-map-target { fill: #1e88e5; } .gz-map-pred { fill: #ef6c00; } .gz-map-text { font: 11px system-ui; fill: #5b616a; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: baseline; } .dot.t { background: #1e88e5; } .dot.p { background: #ef6c00; }
+
+/* ---- camera check ---- */
+.cam-box { margin: 12px 0 4px; }
+.cam-preview { display: block; width: 320px; max-width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; background: #14161a; transform: scaleX(-1); border: 1px solid var(--line); }
