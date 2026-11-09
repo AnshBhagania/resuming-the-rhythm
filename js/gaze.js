@@ -3,8 +3,12 @@
 //   mouse    - the mouse pointer stands in for gaze (?gaze=mouse), for testing the flow and the logging without a camera
 // Recording logs batched `gaze` events ([t, x, y, aoi] per sample, aoi: T text box, P prompt/email card, O elsewhere or no face).
 import { log } from "./log.js";
+import { el } from "./ui.js";
 
 const WEBGAZER_URL = "https://cdn.jsdelivr.net/npm/webgazer@3.5.3/dist/webgazer.js";
+// WebGazer's default is "./mediapipe/face_mesh", a folder next to the page that does not exist on this site. Without this the face model
+// silently fails to load and begin() rejects with "t is not a function" (seen in the first real test). ~10 MB, version matched to WebGazer 3.5.3.
+const FACE_MESH_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619";
 
 const inside = (el, x, y) => { const r = el.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; };
 export function aoiOf(x, y) {
@@ -52,15 +56,36 @@ export function createGaze({ kind, cfg }) {
   async function startWebgazer() {
     await loadScript(WEBGAZER_URL);
     const wg = window.webgazer;
+    wg.params.faceMeshSolutionPath = FACE_MESH_URL;
     wg.saveDataAcrossSessions?.(false);
     wg.setRegression("ridge");
     wg.applyKalmanFilter(true);
     wg.showVideoPreview(false); wg.showPredictionPoints(false); wg.showFaceOverlay(false); wg.showFaceFeedbackBox(false);
     wg.setGazeListener((data) => handle(data ? data.x : null, data ? data.y : null, performance.now()));
-    await wg.begin();
+    try {
+      await wg.begin();
+    } catch (e) {
+      // begin() can reject even though the tracker came up; trust the library's own readiness check, otherwise fail
+      if (!(wg.isReady && wg.isReady())) { stopCamera(); throw e; }
+      log("gaze_state", { state: "begin_rejected_but_ready", message: String(e.message || e) });
+    }
     wg.showVideoPreview(false); wg.showPredictionPoints(false); wg.showFaceOverlay(false); wg.showFaceFeedbackBox(false);
-    cleanup = () => { try { wg.end(); } catch (e) { /* ignore */ } };
+    cleanup = stopCamera;
+    showIndicator();
   }
+
+  // webgazer.end() only removes page elements: it does NOT release the camera. stopVideo() does, and we also stop every track the page holds.
+  function stopCamera() {
+    const wg = window.webgazer;
+    for (const call of ["pause", "stopVideo", "end"]) { try { wg?.[call]?.(); } catch (e) { /* internal state may be partial */ } }
+    document.querySelectorAll("video").forEach((v) => { try { v.srcObject?.getTracks?.().forEach((t) => t.stop()); v.srcObject = null; } catch (e) { /* ignore */ } });
+    ["webgazerVideoContainer", "webgazerGazeDot"].forEach((id) => document.getElementById(id)?.remove());
+    hideIndicator();
+    log("gaze_state", { state: "camera_stopped" });
+  }
+  let indicator = null;
+  function showIndicator() { indicator ??= document.body.appendChild(el("div", { class: "gaze-status", "aria-live": "polite" }, "\u25CF Eye tracking on")); }
+  function hideIndicator() { indicator?.remove(); indicator = null; }
 
   function startMouse() {
     let last = null;

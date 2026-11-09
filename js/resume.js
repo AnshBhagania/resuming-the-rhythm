@@ -31,8 +31,8 @@ export async function runResumption({ mode, task, audio, cfg, content, n, practi
   const boxRect = task.box.getBoundingClientRect();
   const top = Math.round(boxRect.bottom + MIN_GAP_BELOW_BOX);
   const prompt = mode === "DIGI"
-    ? el("button", { class: "resume-prompt resume-btn", type: "button" }, content.resume.digiButton)
-    : el("div", { class: "resume-prompt resume-card" }, content.resume.physPrompt.replace("[button]", cfg.physical.label));
+    ? el("button", { class: "resume-prompt resume-btn", type: "button" }, el("span", { class: "play-ico", "aria-hidden": "true" }), el("span", { class: "resume-label" }, content.resume.digiButton))
+    : el("div", { class: "resume-prompt resume-card" }, el("span", { class: "play-ico", "aria-hidden": "true" }), el("span", { class: "resume-label" }, content.resume.physPrompt.replace("[button]", cfg.physical.label)));
   prompt.style.top = top + "px";
   document.body.append(prompt);
   if (mode === "DIGI") prompt.blur();

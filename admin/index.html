@@ -210,7 +210,7 @@ const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const SPOTIFY_CLIENT_ID = "7bb2a29fb58e49989c6e0ffe11162254";
 const SCOPES = "streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state";
 const REDIRECT = location.origin + location.pathname;
-const ISSUE_TYPES = ["audio_error", "interruption_timeout", "upload_error", "visibility_change"];
+const ISSUE_TYPES = ["audio_error", "interruption_timeout", "upload_error", "visibility_change", "ui_mismatch", "gaze_state"];
 
 const sb = supabase.createClient(SB_URL, ANON);
 const $ = (id) => document.getElementById(id);
@@ -319,7 +319,7 @@ async function openSession(s) {
   $("detail").scrollIntoView({ behavior: "smooth" });
   renderEvents();
 }
-const isIssue = (e) => ISSUE_TYPES.includes(e.type) && (e.type !== "visibility_change" || e.data?.hidden === true);
+const isIssue = (e) => ISSUE_TYPES.includes(e.type) && (e.type !== "visibility_change" || e.data?.hidden === true) && (e.type !== "gaze_state" || ["failed", "denied"].includes(e.data?.state));
 function renderEvents() {
   const type = $("typeFilter").value, only = $("issuesOnly").checked, q = $("textFilter").value.toLowerCase();
   const rows = currentEvents.filter(e => (!type || e.type === type) && (!only || isIssue(e)) && (!q || JSON.stringify(e.data).toLowerCase().includes(q)));
@@ -345,7 +345,7 @@ $("dlCsv").onclick = () => {
 async function loadIssues() {
   const { data, error } = await sb.from("events").select("id,session_id,pid,type,phase,data,received_at").in("type", ISSUE_TYPES).order("id", { ascending: false }).limit(300);
   if (error) { say("Could not load issues: " + error.message, true); return; }
-  const rows = data.filter(e => e.type !== "visibility_change" || e.data?.hidden === true);
+  const rows = data.filter(e => (e.type !== "visibility_change" || e.data?.hidden === true) && (e.type !== "gaze_state" || ["failed", "denied"].includes(e.data?.state)));
   $("issueRows").replaceChildren(...rows.map(e => el("tr", {},
     el("td", { textContent: fmt(e.received_at) }), el("td", { textContent: e.pid }), el("td", {}, el("span", { className: "badge " + (e.type === "audio_error" || e.type === "upload_error" ? "bad" : "warn"), textContent: e.type })),
     el("td", { textContent: e.phase || "" }), el("td", {}, el("pre", { className: "data", textContent: JSON.stringify(e.data) })))));
@@ -505,7 +505,7 @@ function testUrl(extra = {}) {
   if ($("tst_synth").checked) { p.set("audio", "synthetic"); if ($("tst_sound").checked) p.set("sound", "1"); }
   if ($("tst_gaze").value) p.set("gaze", $("tst_gaze").value);
   if ($("tst_nodb").checked) p.set("nodb", "1");
-  for (const [k, v] of Object.entries(extra)) p.set(k, v);
+  for (const [k, v] of Object.entries(extra)) { if (v === "") p.delete(k); else p.set(k, v); }
   return SITE + "?" + p.toString();
 }
 function renderTester() {
@@ -515,9 +515,18 @@ function renderTester() {
   $("tst_sound").disabled = !$("tst_synth").checked;
   $("tstUrl").textContent = testUrl();
   $("tstFull").href = testUrl();
-  $("tstRows").replaceChildren(...testSteps(order).map((s, i) => el("tr", {},
-    el("td", { textContent: i + 1 }), el("td", { textContent: s.label }), el("td", { className: "muted", textContent: s.phase }),
-    el("td", {}, el("a", { className: "btn", target: "_blank", rel: "noopener", href: testUrl({ step: i + 1 }), textContent: "Open this screen" })))));
+  const gazeSel = $("tst_gaze").value;
+  $("tstRows").replaceChildren(...testSteps(order).map((s, i) => {
+    // the camera and calibration screens only exist when eye tracking is on: force it (mouse stands in if "off" is chosen)
+    const eye = s.screen === "camera" || s.screen === "gaze";
+    const forced = eye && gazeSel === "0";
+    const url = testUrl({ step: i + 1, ...(eye ? { gaze: gazeSel === "0" ? "mouse" : gazeSel } : {}) });
+    return el("tr", {},
+      el("td", { textContent: i + 1 }),
+      el("td", {}, s.label, forced ? el("span", { className: "muted", textContent: "  (eye tracking switched on for this screen, mouse simulated)" }) : null),
+      el("td", { className: "muted", textContent: s.phase }),
+      el("td", {}, el("a", { className: "btn", target: "_blank", rel: "noopener", href: url, textContent: "Open this screen" })));
+  }));
   const base = new URLSearchParams({ pid: "CAL" }).toString();
   $("tstGaze").href = SITE + "?" + base + "&gazetest=1";
   $("tstGazeMouse").href = SITE + "?" + base + "&gazetest=1&gaze=mouse";

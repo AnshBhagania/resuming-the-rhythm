@@ -35,9 +35,10 @@ export function render(root, api) {
   async function run() {
     attempt++;
     mount(root, screen(c.title, el("p", {}, c.loading)));
-    try { await Promise.race([gaze.start(), sleep(25000).then(() => { throw new Error("camera start timeout"); })]); }
+    try { await Promise.race([gaze.start(), sleep(60000).then(() => { throw new Error("camera start timeout"); })]); }
     catch (e) {
-      log("gaze_state", { state: "failed", message: String(e.message || e) });
+      log("gaze_state", { state: "failed", message: String(e.message || e), stack: String(e.stack || "").split("\n").slice(0, 3).join(" | ").slice(0, 400) });
+      gaze.stop();                       // never leave the camera running after a failed start
       s.gazeState = "failed";
       mount(root, screen(c.title, el("p", {}, c.failed), continueBtn(api.next, test ? "Finish" : c.cont)));
       return;

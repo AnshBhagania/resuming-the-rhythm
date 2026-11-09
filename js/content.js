@@ -90,7 +90,7 @@ export const CONTENT = {
     body: "[PLACEHOLDER] This takes about 40 seconds and is done only once. You will click a series of dots while looking at each one, then look at a few dots without clicking.",
     posture: "Sit about an arm's length from the screen, face the camera in even light, and keep your head as still as you can for the rest of the study.",
     start: "Start",
-    loading: "Starting the camera...",
+    loading: "Starting the camera and loading the eye tracking model (about 10 MB, this can take a minute)...",
     calibrateHint: "Look at the dot and click it {n} times",
     validateHint: "Now just look at the dot, without clicking",
     ok: "Eye tracking is ready.",

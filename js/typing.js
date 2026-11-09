@@ -5,7 +5,7 @@ import { log } from "./log.js";
 
 export const BOX = { w: 900, h: 260 };
 const LINE_H = 64;             // 3 visible lines = 192 px, centred in the 260 px box
-const MAX_EXTRA = 10;          // max overflow chars per word
+const MAX_EXTRA = 6;           // max overflow chars per word (further keys are ignored and logged)
 const IDLE_MS = 10000;
 const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock", "AltGraph", "Fn", "FnLock",
   "NumLock", "ScrollLock", "OS", "Hyper", "Super", "Dead", "Process", "Unidentified", "Compose"]);
@@ -14,6 +14,9 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
   const words = passage.words;
   const wordEls = [];
   const typedFinal = new Array(words.length).fill(null);
+  const wordRecords = new Array(words.length).fill(null);   // per submitted word: what is needed to reopen it
+  const reopenCount = new Array(words.length).fill(0);
+  let mismatchLogged = false;
 
   // ---- DOM ----
   const wordsEl = el("div", { class: "tw-words" });
@@ -47,7 +50,7 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
   function paintWord(i, typedStr, final) {
     const target = words[i];
     const w = wordEls[i];
-    const chars = w.querySelectorAll(".tw-ch");
+    const chars = w.querySelectorAll(".tw-ch:not(.tw-extra)");     // real letters only: extras must keep their class so they can be removed below
     chars.forEach((c, j) => {
       c.className = "tw-ch";
       if (j < typedStr.length) c.classList.add(typedStr[j] === target[j] ? "ok" : "bad");
@@ -60,6 +63,12 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
     if (!final && i === idx) {
       if (typedStr.length < target.length) chars[typedStr.length].classList.add("tw-caret");
       else end.classList.add("tw-caret");
+    }
+    // Self-check: the screen must show exactly the target plus the extra letters typed. A mismatch is a UI bug and is logged (once per run).
+    const expectedText = target + typedStr.slice(target.length);
+    if (!mismatchLogged && w.textContent !== expectedText) {
+      mismatchLogged = true;
+      log("ui_mismatch", { idx: i, expected: expectedText, shown: w.textContent, typed: typedStr });
     }
   }
 
@@ -114,15 +123,29 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
     log("word_done", {
       idx, target, typed, first_key_t: firstKeyT, space_t: Number(t.toFixed(3)),
       correct_chars: correctChars, errors, wrong_keys: wordWrongKeys, backspaces: wordBackspaces,
-      straddled_interruption: wordStraddled
+      straddled_interruption: wordStraddled, reopened: reopenCount[idx] > 0, reopen_count: reopenCount[idx]
     }, t);
     if (typed === target) goodChars += target.length + 1;
     typedFinal[idx] = typed;
+    wordRecords[idx] = { typed, firstKeyT, wrongKeys: wordWrongKeys, backspaces: wordBackspaces, straddled: wordStraddled };
     paintWord(idx, typed, true);
     wordsDone++;
     idx++; typed = ""; firstKeyT = null; wordWrongKeys = 0; wordBackspaces = 0; wordStraddled = false;
     if (idx >= words.length) { finish("passage_end"); return; }
     paintWord(idx, "", false);
+    scrollToCurrent();
+  }
+
+  // Step back into the previous (wrong) word so it can be corrected. The word_done of the first attempt stays in the log;
+  // a new word_done follows with reopened:true. Analysis uses the LAST word_done per word idx.
+  function reopenPrevious(t, e) {
+    const from = idx, p = idx - 1, rec = wordRecords[p];
+    idx = p; typed = rec.typed; firstKeyT = rec.firstKeyT; wordWrongKeys = rec.wrongKeys; wordBackspaces = rec.backspaces + 1; wordStraddled = rec.straddled;
+    wordsDone--; typedFinal[p] = null; wordRecords[p] = null; reopenCount[p]++;
+    log("key", keyData(e, { bs: true, reopen: true, w: p, c: typed.length }), t);
+    log("word_reopen", { idx: p, typed, reopen_count: reopenCount[p] }, t);
+    paintWord(from, "", false);        // the empty word we leave loses its caret
+    paintWord(p, typed, false);        // the reopened word becomes active, caret at its end
     scrollToCurrent();
   }
 
@@ -135,7 +158,8 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
     const t = e.timeStamp;
     const k = e.key;
     if (MODIFIER_KEYS.has(k) || e.isComposing) return;
-    if (e.ctrlKey || e.metaKey) { if (k.toLowerCase() === "v") e.preventDefault(); return; } // let browser shortcuts through, block paste
+    const wordBs = k === "Backspace" && (e.ctrlKey || e.altKey || e.metaKey);   // Ctrl/Alt/Cmd + Backspace: delete the whole word being typed
+    if ((e.ctrlKey || e.metaKey) && !wordBs) { if (k.toLowerCase() === "v") e.preventDefault(); return; } // let browser shortcuts through, block paste
     // The words are letters only, so numpad keys never belong to the task. This also protects the task from stray presses on an
     // external numpad keyboard that serves as the physical resume button.
     if (e.code && e.code.startsWith("Numpad")) {
@@ -162,10 +186,15 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
 
     const target = words[idx];
     if (isBack) {
-      if (typed.length === 0) { log("key", keyData(e, { bs: true, noop: true, w: idx, c: 0 }), t); return; }
-      typed = typed.slice(0, -1);
+      if (typed.length === 0) {
+        // Like Monkeytype: Backspace on an empty word steps back into the previous word, but only if that word was typed wrong.
+        if (idx > 0 && wordRecords[idx - 1] && wordRecords[idx - 1].typed !== words[idx - 1]) { reopenPrevious(t, e); return; }
+        log("key", keyData(e, { bs: true, noop: true, w: idx, c: 0 }), t);
+        return;
+      }
+      typed = wordBs ? "" : typed.slice(0, -1);
       wordBackspaces++;
-      log("key", keyData(e, { bs: true, w: idx, c: typed.length }), t);
+      log("key", keyData(e, { bs: true, bs_word: wordBs, w: idx, c: typed.length }), t);
       paintWord(idx, typed, false); scrollToCurrent();
       return;
     }

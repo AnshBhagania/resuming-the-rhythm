@@ -53,6 +53,14 @@ Planned setup: an external Bluetooth keyboard (full size with numpad) next to th
 ## Testing checklist
 See `docs/TESTING.md` for everything that still needs a person, a real device or real Chrome.
 
+## Typing behaviour (modelled on Monkeytype)
+- Space submits the word (even if wrong or short; missing letters are underlined). Space on an empty word is ignored.
+- Extra letters are shown in red after the word, up to 6; they disappear as you backspace. Further keys are ignored (logged as `key_ignored`, reason `overflow`).
+- Backspace deletes inside the current word. On an empty word it steps back into the previous word, but only if that word was typed wrong (a correct word is locked).
+  Ctrl, Alt or Cmd + Backspace deletes the whole word being typed. Numpad keys, Tab, Enter and paste are ignored.
+- Reopened word: the first `word_done` stays in the log, then a `word_reopen` event, then a new `word_done` with `reopened: true`. **Analysis should use the LAST `word_done` per word idx.**
+- Every repaint is self-checked: if the screen ever shows something other than the target plus the typed extras, a `ui_mismatch` event is logged (shown on the admin Issues tab).
+
 ## Data
 - Tables: `sessions`, `events` (see `supabase/migrations/`). Export from the admin page (JSON or CSV per session) or from the Supabase
   dashboard / SQL editor. Test rows have pid `TEST`, `T01`, `T02` or flags debug / dryrun.

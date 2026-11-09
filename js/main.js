@@ -69,9 +69,12 @@ async function boot() {
   window.addEventListener("blur", () => log("blur"));
   window.addEventListener("focus", () => log("focus"));
 
+  window.addEventListener("pagehide", () => session.gaze?.stop());
   window.addEventListener("resize", () => log("window_resize", { w: innerWidth, h: innerHeight }));
   const machine = createMachine({ root, session, onState: (step, i, n) => {
     updateDebug(session, step, i, n);
+    // The camera is released as soon as the last typing screen is over (after block 3's typing), and always at the end.
+    if ((step.screen === "questions" && step.block === session.cfg.blocks) || step.screen === "debrief" || step.screen === "done") session.gaze?.stop();
     const bar = document.querySelector("#progress div");
     if (bar) bar.style.width = Math.round(((i + 1) / n) * 100) + "%";
     // Gaze is recorded only while the typing task is on screen.
@@ -85,6 +88,7 @@ async function boot() {
     const idx = byNumber >= 0 ? byNumber : machine.steps.findIndex((st) => st.screen === name && (!blk || st.block === Number(blk)));
     if (idx >= 0 && idx < machine.steps.length) startAt = idx;
   }
+  if (machine.steps[startAt]?.screen === "gaze" && session.gaze) session.gazeState = "permitted";   // jumped past the camera screen: calibration should still run
   machine.go(startAt);
 }
 
