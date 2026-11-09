@@ -7,6 +7,16 @@ import { createPhysicalSource } from "./input.js";
 
 const MIN_GAP_BELOW_BOX = 250;
 
+// Where an element will REST. getBoundingClientRect() during a slide-in animation includes the animation's start offset, which made the
+// logged prompt rectangles wrong (about 28 px low) in app versions up to 0.8.0.
+export function settledRect(el) {
+  const prev = el.style.animation;
+  el.style.animation = "none";
+  const r = el.getBoundingClientRect();
+  el.style.animation = prev;
+  return r;
+}
+
 export function onFirstFrame(cb) {
   let done = false;
   const run = () => { if (!done) { done = true; cb(); } };
@@ -29,7 +39,11 @@ export async function runResumption({ mode, task, audio, cfg, content, n, practi
 
   // DIGI / PHYS: same size and position prompt, at least 250 px below the text box.
   const boxRect = task.box.getBoundingClientRect();
-  const top = Math.round(boxRect.bottom + MIN_GAP_BELOW_BOX);
+  const wantedTop = Math.round(boxRect.bottom + MIN_GAP_BELOW_BOX);
+  // In a window too short to show the prompt 250 px below the box, keep it visible instead (a hidden prompt traps the participant).
+  // The real gap is logged and the trial flagged `clamped`, so analysis can exclude it.
+  const top = Math.max(Math.round(boxRect.bottom) + 8, Math.min(wantedTop, innerHeight - 56 - 16));
+  const clamped = top < wantedTop;
   const prompt = mode === "DIGI"
     ? el("button", { class: "resume-prompt resume-btn", type: "button" }, el("span", { class: "play-ico", "aria-hidden": "true" }), el("span", { class: "resume-label" }, content.resume.digiButton))
     : el("div", { class: "resume-prompt resume-card" }, el("span", { class: "play-ico", "aria-hidden": "true" }), el("span", { class: "resume-label" }, content.resume.physPrompt.replace("[button]", cfg.physical.label)));
@@ -62,8 +76,8 @@ export async function runResumption({ mode, task, audio, cfg, content, n, practi
     }
   });
 
-  const rect = prompt.getBoundingClientRect();   // measured synchronously; logged on the first painted frame (or 50 ms, whichever is first)
-  onFirstFrame(() => log("resume_prompt_shown", { ...base, aoi_prompt: { x: rect.left, y: rect.top, w: rect.width, h: rect.height }, gap_below_box: Math.round(rect.top - boxRect.bottom) }));
+  const rect = settledRect(prompt);   // measured at its resting place; logged on the first painted frame (or 50 ms, whichever is first)
+  onFirstFrame(() => log("resume_prompt_shown", { ...base, aoi_prompt: { x: rect.left, y: rect.top, w: rect.width, h: rect.height }, gap_below_box: Math.round(rect.top - boxRect.bottom), clamped, viewport: { w: innerWidth, h: innerHeight } }));
 
   if (mode === "DIGI") {
     document.addEventListener("mousemove", (e) => log("mouse_move_first", { ...base, x: e.clientX, y: e.clientY }, e.timeStamp), { once: true, capture: true });
@@ -89,6 +103,11 @@ function listenWrongInputs({ mode, cfg, base, prompt, valid, onValid }) {
     if (e.type === "keydown" && ["Shift", "Control", "Alt", "Meta", "CapsLock"].includes(e.key)) return;
     const v = valid(e);
     if (v) { e.preventDefault(); e.stopPropagation(); onValid?.(e, v); return; }
+    // Browser shortcuts (Ctrl/Cmd + minus to zoom out, reload, F-keys) are not attempts to resume: let them through and log them apart.
+    if (e.type === "keydown" && (e.ctrlKey || e.metaKey || /^F([1-9]|1[0-2])$/.test(e.key))) {
+      log("key_shortcut", { ...base, key: e.key, code: e.code, ctrl: e.ctrlKey, meta: e.metaKey }, e.timeStamp);
+      return;
+    }
     e.preventDefault();
     const kind = e.type === "click"
       ? (prompt && prompt.contains(e.target) ? "click_on_card" : "click_elsewhere")

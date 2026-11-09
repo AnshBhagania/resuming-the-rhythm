@@ -10,7 +10,7 @@ const IDLE_MS = 10000;
 const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock", "AltGraph", "Fn", "FnLock",
   "NumLock", "ScrollLock", "OS", "Hyper", "Super", "Dead", "Process", "Unidentified", "Compose"]);
 
-export function createTypingTask({ parent, passage, seconds, label, debug = false, onEnd, onStart, debugExtra, hintText = "" }) {
+export function createTypingTask({ parent, passage, seconds, label, debug = false, onEnd, onStart, debugExtra, hintText = "", reopenCorrect = true }) {
   const words = passage.words;
   const wordEls = [];
   const typedFinal = new Array(words.length).fill(null);
@@ -140,6 +140,7 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
   // a new word_done follows with reopened:true. Analysis uses the LAST word_done per word idx.
   function reopenPrevious(t, e) {
     const from = idx, p = idx - 1, rec = wordRecords[p];
+    if (rec.typed === words[p]) goodChars -= words[p].length + 1;      // it counted as good the first time
     idx = p; typed = rec.typed; firstKeyT = rec.firstKeyT; wordWrongKeys = rec.wrongKeys; wordBackspaces = rec.backspaces + 1; wordStraddled = rec.straddled;
     wordsDone--; typedFinal[p] = null; wordRecords[p] = null; reopenCount[p]++;
     log("key", keyData(e, { bs: true, reopen: true, w: p, c: typed.length }), t);
@@ -187,9 +188,11 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
     const target = words[idx];
     if (isBack) {
       if (typed.length === 0) {
-        // Like Monkeytype: Backspace on an empty word steps back into the previous word, but only if that word was typed wrong.
-        if (idx > 0 && wordRecords[idx - 1] && wordRecords[idx - 1].typed !== words[idx - 1]) { reopenPrevious(t, e); return; }
-        log("key", keyData(e, { bs: true, noop: true, w: idx, c: 0 }), t);
+        // Backspace on an empty word steps back into the previous word. Monkeytype only allows this for words typed WRONG; here it is allowed
+        // for any word unless cfg.reopenCorrectWords is false.
+        const prevRec = idx > 0 ? wordRecords[idx - 1] : null;
+        if (prevRec && (reopenCorrect || prevRec.typed !== words[idx - 1])) { reopenPrevious(t, e); return; }
+        log("key", keyData(e, { bs: true, noop: true, noop_reason: idx === 0 ? "first_word" : "previous_word_correct_and_locked", w: idx, c: 0 }), t);
         return;
       }
       typed = wordBs ? "" : typed.slice(0, -1);

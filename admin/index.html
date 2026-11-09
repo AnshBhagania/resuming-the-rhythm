@@ -168,7 +168,7 @@
           <label><span>Silent test audio instead of Spotify</span><input type="checkbox" id="tst_synth" checked></label>
           <label><span>Make test audio audible (sound)</span><input type="checkbox" id="tst_sound"></label>
           <label><span>Eye tracking</span><select id="tst_gaze"><option value="0">off (the camera and calibration rows still use the real webcam)</option><option value="mouse">mouse pointer simulates gaze (no camera is used)</option><option value="">real webcam everywhere</option></select></label>
-          <label><span>Upload nothing (nodb)</span><input type="checkbox" id="tst_nodb" checked></label>
+          <label><span>Do NOT upload this run (nodb). Leave unticked to keep it in the database</span><input type="checkbox" id="tst_nodb"></label>
           <label><span>Seed (optional)</span><input id="tst_seed" type="number" placeholder="random" style="width:110px"></label>
         </div>
         <div class="row" style="margin-top:12px"><span class="muted">Link for the whole study:</span> <a class="btn" id="tstFull" target="_blank" rel="noopener">Open from the start</a> <button class="btn" id="tstCopy">Copy link</button></div>

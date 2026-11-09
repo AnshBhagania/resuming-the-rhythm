@@ -61,10 +61,20 @@ See `docs/TESTING.md` for everything that still needs a person, a real device or
 ## Typing behaviour (modelled on Monkeytype)
 - Space submits the word (even if wrong or short; missing letters are underlined). Space on an empty word is ignored.
 - Extra letters are shown in red after the word, up to 6; they disappear as you backspace. Further keys are ignored (logged as `key_ignored`, reason `overflow`).
-- Backspace deletes inside the current word. On an empty word it steps back into the previous word, but only if that word was typed wrong (a correct word is locked).
+- Backspace deletes inside the current word. On an empty word it steps back into the previous word, whether that word was wrong or correct (`reopenCorrectWords` in `js/config.js`; set it to `false` for the Monkeytype rule, wrong words only). If it does nothing, the log says why (`noop_reason`).
   Ctrl, Alt or Cmd + Backspace deletes the whole word being typed. Numpad keys, Tab, Enter and paste are ignored.
-- Reopened word: the first `word_done` stays in the log, then a `word_reopen` event, then a new `word_done` with `reopened: true`. **Analysis should use the LAST `word_done` per word idx.**
+- Reopened word: the first `word_done` stays in the log, then a `word_reopen` event, then a new `word_done` with `reopened: true`. **Analysis should use the LAST `word_done` per word idx and exclude reopened words from per-word speed (their time includes the pause).**
 - Every repaint is self-checked: if the screen ever shows something other than the target plus the typed extras, a `ui_mismatch` event is logged (shown on the admin Issues tab).
+
+## Resume prompt behaviour
+- The prompt sits 250 px below the text box. In a window too short to show it there, it is kept on screen instead, `clamped: true` is logged with the real gap and the viewport size,
+  and analysis should exclude those trials. (The pre-check requires a window of at least 1280 x 720, so this only happens when the window is shrunk later or in debug runs.)
+- Browser shortcuts (Ctrl/Cmd combos such as zoom, F-keys) work while a prompt waits; they are logged as `key_shortcut`, not as wrong inputs.
+
+## Data caveats by app version
+- **Sessions logged as version 0.8.0 (everything before the 0.8.1 release) are pre-release test data.** They ran older typing and eye-tracking code, and the logged prompt rectangles are wrong:
+  resume prompts are logged about 110 px too far right and 28 px too low, and the email card 28 px too low (an animation offset). From 0.8.1 the logged rectangles are the resting positions.
+- Check `session_start.app_version` before analysing a session.
 
 ## Data
 - Tables: `sessions`, `events` (see `supabase/migrations/`). Export from the admin page (JSON or CSV per session) or from the Supabase

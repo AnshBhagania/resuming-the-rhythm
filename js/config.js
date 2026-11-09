@@ -1,9 +1,10 @@
-export const APP_VERSION = "0.8.0";
+export const APP_VERSION = "0.8.1";
 
 export const CONFIG = {
   baselineSeconds: 120,
   blocks: 3,
   interruptionsPerBlock: 4,
+  reopenCorrectWords: true,         // Backspace on an empty word steps back into the previous word even if it was typed correctly (false = Monkeytype rule: wrong words only)
   postLastInterruptionSeconds: 60, // typing continues this long after the last interruption so recovery can be measured
   blockPassageWords: 800,
   interruptionDelaySeconds: [45, 75],

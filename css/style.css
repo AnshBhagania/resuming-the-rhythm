@@ -185,7 +185,8 @@ kbd { font: 600 13px var(--mono); min-width: 26px; text-align: center; border: 1
 .em-hint { margin: 10px 0 0; font-size: .88rem; color: var(--muted); }
 
 /* ---- resumption prompts + music status (sizes and positions are fixed by the study design: do not change) ---- */
-.resume-prompt { position: fixed; left: 50%; transform: translateX(-50%); width: 220px; height: 56px; z-index: 40; border-radius: 12px; font: 600 15px system-ui; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 12px; animation: em-in .2s ease-out; }
+.resume-prompt { position: fixed; left: 50%; transform: translateX(-50%); width: 220px; height: 56px; z-index: 40; border-radius: 12px; font: 600 15px system-ui; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 12px; animation: resume-in .2s ease-out; }
+@keyframes resume-in { from { transform: translateX(-50%) translateY(28px); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
 .resume-prompt { gap: 10px; text-align: left; line-height: 1.2; }
 .resume-btn { background: #1a7f37; color: #fff; border: 0; cursor: pointer; box-shadow: 0 4px 14px rgba(26,127,55,.4); transition: background .15s, transform .05s; }
 .resume-btn:hover { background: #156d2e; }
