@@ -360,7 +360,16 @@ async function callAdmin(body) {
     method: "POST", headers: { "Content-Type": "application/json", apikey: ANON, Authorization: "Bearer " + data.session.access_token }, body: JSON.stringify(body)
   });
   const j = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(j.error ? `${j.error}${j.detail ? ": " + j.detail : ""}${j.product ? " (plan: " + j.product + ")" : ""}` : "HTTP " + res.status);
+  if (!res.ok) {
+    const friendly = {
+      spotify_user_not_registered: "This Spotify account is not registered in the Spotify app yet. Add its email under User Management (developer.spotify.com/dashboard, your app, Settings), then try again.",
+      not_premium: "This Spotify account is not Premium" + (j.product ? ` (plan: ${j.product})` : "") + ". Playback needs Premium.",
+      spotify_rejected: "Spotify rejected the login. Start the link again.",
+      not_admin: "Your login is not on the admin allow-list.",
+      server_error: "The server hit an error: " + (j.detail || "unknown")
+    };
+    throw new Error(friendly[j.error] || (j.error ? `${j.error}${j.detail ? ": " + j.detail : ""}` : "HTTP " + res.status));
+  }
   return j;
 }
 async function loadAccounts() {

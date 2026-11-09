@@ -17,7 +17,7 @@ const rest = (path: string, init: RequestInit = {}) =>
 const json = (body: unknown, status: number, cors: Record<string, string>) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" } });
 
-Deno.serve(async (req) => {
+async function handle(req: Request): Promise<Response> {
   const origin = req.headers.get("origin") ?? "";
   const cors = {
     "Access-Control-Allow-Origin": ALLOWED.includes(origin) ? origin : ALLOWED[0],
@@ -47,9 +47,17 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: body.refresh_token, client_id: CLIENT_ID }),
     });
-    const tj = await tok.json();
+    const tj = await tok.json().catch(() => ({}));
     if (!tok.ok) return json({ error: "spotify_rejected", detail: tj.error }, 400, cors);
-    const me = await (await fetch("https://api.spotify.com/v1/me", { headers: { Authorization: `Bearer ${tj.access_token}` } })).json();
+    // Spotify answers /me with PLAIN TEXT (not JSON) when the account is not on the app's User Management list (Development mode).
+    const meRes = await fetch("https://api.spotify.com/v1/me", { headers: { Authorization: `Bearer ${tj.access_token}` } });
+    const meText = await meRes.text();
+    let me: any = null;
+    try { me = JSON.parse(meText); } catch { /* not JSON */ }
+    if (!meRes.ok || !me) {
+      const notRegistered = /not registered|developer dashboard/i.test(meText);
+      return json({ error: notRegistered ? "spotify_user_not_registered" : "spotify_profile_failed", status: meRes.status, detail: meText.slice(0, 200) }, 400, cors);
+    }
     if (me.product !== "premium") return json({ error: "not_premium", product: me.product ?? null }, 400, cors);
     const r = await rest("spotify_accounts?on_conflict=spotify_user_id", {
       method: "POST",
@@ -79,4 +87,15 @@ Deno.serve(async (req) => {
     return json({ ok: true }, 200, cors);
   }
   return json({ error: "action" }, 400, cors);
+}
+
+Deno.serve(async (req) => {
+  try {
+    return await handle(req);
+  } catch (e) {
+    // a crash must still answer with CORS headers, otherwise the browser only reports "Failed to fetch"
+    const origin = req.headers.get("origin") ?? "";
+    const cors = { "Access-Control-Allow-Origin": ALLOWED.includes(origin) ? origin : ALLOWED[0], "Vary": "Origin" };
+    return json({ error: "server_error", detail: String((e as Error)?.message ?? e).slice(0, 200) }, 500, cors);
+  }
 });
