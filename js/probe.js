@@ -21,8 +21,18 @@ export async function probeLatency(cfg) {
 export async function logKeyboardLayout() {
   try {
     const m = await navigator.keyboard.getLayoutMap();
-    log("device_info", { keyboard: { KeyQ: m.get("KeyQ"), KeyW: m.get("KeyW"), KeyY: m.get("KeyY"), KeyZ: m.get("KeyZ"), KeyA: m.get("KeyA") } });
-  } catch (e) { log("device_info", { keyboard: null }); }
+    const keyboard = { KeyQ: m.get("KeyQ"), KeyW: m.get("KeyW"), KeyY: m.get("KeyY"), KeyZ: m.get("KeyZ"), KeyA: m.get("KeyA") };
+    log("device_info", { keyboard, layout_class: layoutClass(keyboard) });
+  } catch (e) { log("device_info", { keyboard: null, layout_class: "unknown" }); }
+}
+
+// QWERTY / QWERTZ / AZERTY / other, from the physical-position probe above ("unknown" when the browser cannot tell).
+export function layoutClass(k) {
+  if (!k || !k.KeyQ) return "unknown";
+  if (k.KeyQ === "a" && k.KeyA === "q") return "AZERTY";
+  if (k.KeyQ === "q" && k.KeyW === "w" && k.KeyY === "z" && k.KeyZ === "y") return "QWERTZ";
+  if (k.KeyQ === "q" && k.KeyW === "w" && k.KeyY === "y" && k.KeyZ === "z") return "QWERTY";
+  return "other";
 }
 
 // Audio stack latency as reported by the browser (does not play anything).

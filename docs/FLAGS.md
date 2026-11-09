@@ -23,6 +23,7 @@ Combine them with `&`, e.g. `?pid=P07&k=KEY` for a real participant or `?pid=T01
 | `dryrun` | `1` | Short timings: baseline 20 s, practice 10 s, rehearsal after 4 s and then an interruption every 8 to 12 s in blocks, 10 s tail, whole session about 3 minutes. | yes |
 | `audio` | `synthetic` | Plays a silent test tone through the same code path instead of Spotify. Any other value means Spotify. | yes |
 | `sound` | `1` | Only with `audio=synthetic`: makes the test tone and the email beep audible. Default is silent. | yes (via `audio`) |
+| `setup` | text (letters, digits, `_`, `-`, up to 40) | Researcher note stored in the session flags: where the covered external keyboard was placed (use one marked position for every participant, e.g. `right_of_laptop`). Not shown to the participant. | no |
 | `gaze` | `0` | Turns eye tracking off for this run (no camera step). | no |
 | `gaze` | `mouse` | The mouse pointer stands in for gaze, so the calibration and logging can be tested without a camera. | yes |
 | `nodb` | `1` | Nothing is uploaded to the database. The Done screen still offers the JSON backup. | yes (nothing is stored) |

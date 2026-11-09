@@ -1,4 +1,8 @@
+*.local
+*.pyc
 .DS_Store
 .env
-*.local
+__pycache__/
+analysis/out/
+analysis_out/
 node_modules/

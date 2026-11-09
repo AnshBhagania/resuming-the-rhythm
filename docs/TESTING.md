@@ -35,6 +35,7 @@ Last updated: 2026-11-08 (after Stage 8 and the repo cleanup). A shareable, edit
 | Same, with real Spotify audio | **To do** | section 4 |
 | Practice is typing only. Each block starts with one flagged rehearsal interruption (`practice:true`, `intr` 0) in its own mode, then 4 real ones (`intr` 1 to 12 over the study) | Done (synthetic audio) | practice, then block 1 |
 | Email card shows 3 steps (choose with 1/2/3, type reply, Enter). Clicking an answer does NOT select; it shows "Clicking does not select..." and logs `email_click` (option, stage, x, y). `reply_sent` carries `clicks` and last `cursor` | Done (scripted, 0.8.4) | click an answer, then press the number |
+| Precheck asks touch typing, keyboard (laptop/external) and pointer (trackpad/mouse); all three required; logged as `answer` ids; `device_info` has `layout_class`; `&setup=...` stored in session flags | Done (scripted, 0.8.6) | precheck screen |
 | Status icon (playing/paused) visible in the same corner in all modes | **To do** (visual) | look bottom right |
 | Prompt position and size OK on a large monitor (scale stays 1) and after resizing the window mid-session | **To do** | resize |
 

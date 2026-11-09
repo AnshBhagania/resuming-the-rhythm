@@ -1,4 +1,4 @@
-import { el, screen, mount, continueBtn } from "../ui.js";
+import { el, screen, mount, continueBtn, radioGroup } from "../ui.js";
 import { log } from "../log.js";
 import { probeLatency, logKeyboardLayout, logAudioDevice } from "../probe.js";
 import { computeScale } from "../layout.js";
@@ -6,6 +6,7 @@ import { computeScale } from "../layout.js";
 export function render(root, api) {
   const c = api.content.precheck;
   const state = { headphones: false, keyboard: false };
+  const dev = { touch_typing: null, typing_keyboard: null, pointer: null };   // setup questions: needed to explain device differences in analysis
   // Spotify playback needs DRM (Widevine). Check it now so a browser that cannot play is caught before the music step.
   const needsDrm = api.session.audio.kind === "spotify";
   let drmOk = !needsDrm, drmChecked = !needsDrm;
@@ -19,6 +20,9 @@ export function render(root, api) {
       window: { w: innerWidth, h: innerHeight },
       ui_scale: Number(computeScale().toFixed(3))
     });
+    log("answer", { id: "demo_touch_typing", value: dev.touch_typing });
+    log("answer", { id: "device_typing_keyboard", value: dev.typing_keyboard });
+    log("answer", { id: "device_pointer", value: dev.pointer });
     window.removeEventListener("resize", update);
     api.next();
   }, api.content.ui.continue, true);
@@ -36,13 +40,17 @@ export function render(root, api) {
     drmLine.textContent = !needsDrm || !drmChecked ? "" : drmOk ? c.drmOk : c.drmMissing;
     drmLine.className = "status " + (drmOk ? "ok" : "bad");
     const drmPass = drmOk || !drmChecked || api.session.flags.debug;   // debug runs may continue without DRM (they cannot play Spotify)
-    btn.disabled = !(state.headphones && state.keyboard && drmPass);
+    btn.disabled = !(state.headphones && state.keyboard && drmPass && dev.touch_typing && dev.typing_keyboard && dev.pointer);
   }
   window.addEventListener("resize", update);
+  const ask = (key, q, name) => el("div", { class: "field" }, el("p", {}, q.label), radioGroup(name, q.options.map(([value, label]) => ({ value, label })), (v) => { dev[key] = v; update(); }));
 
   mount(root, screen(c.title,
     el("p", {}, c.body),
     el("label", { class: "check" }, hp, el("span", {}, c.headphones)),
+    ask("touch_typing", c.touchTyping, "pc_touch"),
+    ask("typing_keyboard", c.typingKeyboard, "pc_keyboard"),
+    ask("pointer", c.pointer, "pc_pointer"),
     el("p", {}, c.keyboardPrompt + " ", el("strong", { class: "word" }, c.keyboardWord)),
     kbInput,
     sizeLine,

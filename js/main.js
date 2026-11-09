@@ -38,6 +38,7 @@ async function boot() {
     seed: seedParam && /^\d+$/.test(seedParam) ? Number(seedParam) >>> 0 : null,
     gazetest: params.get("gazetest") === "1",
     inputtest: params.get("inputtest") === "1",
+    setup: (params.get("setup") || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40) || null,   // researcher note: where the covered keyboard was placed (e.g. right_of_laptop)
     gazeParam: params.get("gaze"),  // "0" off, "mouse" test source
     step: params.get("debug") === "1" ? params.get("step") : null   // jump straight to a screen (debug runs only)
   };
