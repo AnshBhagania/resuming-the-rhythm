@@ -2,6 +2,7 @@
 // Stage 3 drives lock()/unlock()/markInterruption() from the interruption module.
 import { el } from "./ui.js";
 import { log } from "./log.js";
+import { getScale } from "./layout.js";
 
 export const BOX = { w: 900, h: 260 };
 const LINE_H = 64;             // 3 visible lines = 192 px, centred in the 260 px box
@@ -234,7 +235,7 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
   scrollToCurrent();
   const r = box.getBoundingClientRect();
   const aoi = { x: r.left, y: r.top, w: r.width, h: r.height };
-  log("typing_ready", { label, passage_id: passage.id, seed: passage.seed, n_words: words.length, mean_len: passage.meanLen, seconds, aoi_text: aoi, window: { w: innerWidth, h: innerHeight } });
+  log("typing_ready", { label, ui_scale: getScale(), passage_id: passage.id, seed: passage.seed, n_words: words.length, mean_len: passage.meanLen, seconds, aoi_text: aoi, window: { w: innerWidth, h: innerHeight } });
 
   if (debug) {
     dbgTimer = setInterval(() => {

@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.8.2";
+export const APP_VERSION = "0.8.3";
 
 export const CONFIG = {
   baselineSeconds: 120,
@@ -26,7 +26,6 @@ export const CONFIG = {
   gaze: { enabled: true, optional: true, gridCols: 3, gridRows: 3, clicksPerPoint: 5, validationDwellMs: 2500, validationSettleMs: 1000, maxErrorPx: 250, maxAttempts: 3, sampleCapHz: 30 },
   flushIntervalMs: 2000,
   flushMaxEvents: 200,
-  minScreen: { w: 1280, h: 720 },
   orders: {
     O1: ["AUTO", "DIGI", "PHYS"], O2: ["AUTO", "PHYS", "DIGI"],
     O3: ["DIGI", "AUTO", "PHYS"], O4: ["DIGI", "PHYS", "AUTO"],

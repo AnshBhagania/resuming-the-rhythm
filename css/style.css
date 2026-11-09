@@ -1,6 +1,7 @@
 /* Participant app styles. Plain CSS, no build step. Light theme only on purpose: every participant sees the same screen.
    All text meets WCAG AA contrast (4.5:1); form controls and focus rings are visible without relying on colour alone. */
 :root {
+  --s: 1;   /* UI scale for the fixed-size study elements, set from the window size by js/layout.js */
   --bg: #f3f4f7;
   --fg: #1b1d21;
   --muted: #5b616a;
@@ -21,6 +22,7 @@
 [hidden] { display: none !important; }   /* component display rules must never override the hidden attribute */
 
 html, body {
+  overflow-x: hidden;
   margin: 0;
   min-height: 100%;
   background: var(--bg);
@@ -54,6 +56,7 @@ body.typing-active #progress { opacity: 0; }
 .note { color: var(--muted); font-size: .92rem; }
 .status.ok { color: var(--ok); font-weight: 550; }
 .status.bad { color: var(--error); font-weight: 550; }
+.status.warn { color: #8a5300; font-weight: 550; }
 
 /* ---- buttons ---- */
 button { font: inherit; }
@@ -142,7 +145,7 @@ body.has-debug #app { padding-top: 56px; }
 #debug-bar button { margin-left: 6px; font: inherit; background: #444; color: #fff; border: 0; border-radius: 3px; cursor: pointer; }
 
 /* ---- typing task ---- */
-.typing-view { display: flex; flex-direction: column; align-items: center; gap: 12px; align-self: flex-start; margin-top: 40px; }
+.typing-view { display: flex; flex-direction: column; align-items: center; gap: 12px; align-self: flex-start; margin-top: 40px; transform: scale(var(--s, 1)); transform-origin: top center; }
 .typing-box {
   background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1px 2px rgba(20,24,31,.05), 0 10px 28px rgba(20,24,31,.06);
   padding: 34px 40px; font: 28px/64px var(--mono); transition: opacity .15s, filter .15s;
@@ -166,9 +169,9 @@ body.has-debug #app { padding-top: 56px; }
 .email-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 50; pointer-events: none; }
 .email-card {
   pointer-events: auto; width: 640px; max-width: calc(100vw - 48px); background: var(--card); border-radius: 16px;
-  box-shadow: 0 12px 40px rgba(20,24,31,.28); padding: 24px 30px; animation: em-in .22s ease-out;
+  box-shadow: 0 12px 40px rgba(20,24,31,.28); padding: 24px 30px; animation: card-in .22s ease-out; transform: scale(var(--s, 1));
 }
-@keyframes em-in { from { transform: translateY(28px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes card-in { from { transform: scale(var(--s, 1)) translateY(28px); opacity: 0; } to { transform: scale(var(--s, 1)); opacity: 1; } }
 .email-card.em-reminder { outline: 3px solid #d98200; }
 .em-head { border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 12px; }
 .em-from { font-size: .85rem; color: var(--muted); }
@@ -185,12 +188,12 @@ kbd { font: 600 13px var(--mono); min-width: 26px; text-align: center; border: 1
 .em-hint { margin: 10px 0 0; font-size: .88rem; color: var(--muted); }
 
 /* ---- resumption prompts + music status (sizes and positions are fixed by the study design: do not change) ---- */
-.resume-prompt { position: fixed; left: 50%; transform: translateX(-50%); width: 220px; height: 56px; z-index: 40; border-radius: 12px; font: 600 15px system-ui; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 12px; animation: resume-in .2s ease-out; }
-@keyframes resume-in { from { transform: translateX(-50%) translateY(28px); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
+.resume-prompt { position: fixed; left: 50%; transform: translateX(-50%) scale(var(--s, 1)); transform-origin: top center; width: 220px; height: 56px; z-index: 40; border-radius: 12px; font: 600 15px system-ui; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 12px; animation: resume-in .2s ease-out; }
+@keyframes resume-in { from { transform: translateX(-50%) scale(var(--s, 1)) translateY(28px); opacity: 0; } to { transform: translateX(-50%) scale(var(--s, 1)); opacity: 1; } }
 .resume-prompt { gap: 10px; text-align: left; line-height: 1.2; }
 .resume-btn { background: #1a7f37; color: #fff; border: 0; cursor: pointer; box-shadow: 0 4px 14px rgba(26,127,55,.4); transition: background .15s, transform .05s; }
 .resume-btn:hover { background: #156d2e; }
-.resume-btn:active { transform: translateX(-50%) translateY(1px); }
+.resume-btn:active { transform: translateX(-50%) scale(var(--s, 1)) translateY(1px); }
 .resume-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(26,127,55,.45); }
 .resume-card { background: #fff; color: var(--fg); border: 2px solid #1a7f37; cursor: default; }   /* same size, position and icon as the button, but not clickable */
 .play-ico { flex: none; width: 26px; height: 26px; border-radius: 50%; background: center / contain no-repeat; }

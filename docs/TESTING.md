@@ -25,7 +25,7 @@ Last updated: 2026-11-08 (after Stage 8 and the repo cleanup). A shareable, edit
 | 60 s email timeout shows reminder and logs `interruption_timeout` | **To do** | wait 60 s on an email (not dry run shortened) |
 | Realistic timings: first interruption 45 to 75 s, tail 60 s, whole session length (~25 min?) | **To do** | one run without `dryrun` |
 | Mobile / tablet is blocked with "Desktop only" | Done (UA check, not on a real phone) | open link on a phone |
-| Window smaller than 1280 x 720 blocks pre-check | **To do** | resize browser |
+| Small windows: no size gate; typing box, prompt, 250 px gap and email card scale together (1024 x 600 gives scale 0.855, 800 x 500 gives 0.678, gap exactly 250 x scale, nothing clamped, no scrollbars) | Done (scripted, simulated viewports) / **To do** on Mina's real small laptop in full-screen mode | open a block with each mode | |
 | Refresh mid-session: currently starts a NEW session with a new session id (data stays split) | **Known gap**, decide policy | press reload mid-block |
 
 ## 2. Resumption modes (Stage 4)
@@ -35,7 +35,7 @@ Last updated: 2026-11-08 (after Stage 8 and the repo cleanup). A shareable, edit
 | Same, with real Spotify audio | **To do** | section 4 |
 | Practice is typing only. Each block starts with one flagged rehearsal interruption (`practice:true`, `intr` 0) in its own mode, then 4 real ones (`intr` 1 to 12 over the study) | Done (synthetic audio) | practice, then block 1 |
 | Status icon (playing/paused) visible in the same corner in all modes | **To do** (visual) | look bottom right |
-| Prompt position OK on 1280 x 720 and on a large monitor | **To do** | resize |
+| Prompt position and size OK on a large monitor (scale stays 1) and after resizing the window mid-session | **To do** | resize |
 
 ## 3. Data, admin, accounts (Stage 5, 6)
 | Check | Status | How |

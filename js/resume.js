@@ -4,6 +4,7 @@ import { el } from "./ui.js";
 import { log } from "./log.js";
 import { meanOfRecent } from "./gaze.js";
 import { createPhysicalSource } from "./input.js";
+import { getScale } from "./layout.js";
 
 const MIN_GAP_BELOW_BOX = 250;
 
@@ -39,10 +40,11 @@ export async function runResumption({ mode, task, audio, cfg, content, n, practi
 
   // DIGI / PHYS: same size and position prompt, at least 250 px below the text box.
   const boxRect = task.box.getBoundingClientRect();
-  const wantedTop = Math.round(boxRect.bottom + MIN_GAP_BELOW_BOX);
+  const ui = getScale();                                            // everything scales together on smaller windows
+  const wantedTop = Math.round(boxRect.bottom + MIN_GAP_BELOW_BOX * ui);
   // In a window too short to show the prompt 250 px below the box, keep it visible instead (a hidden prompt traps the participant).
   // The real gap is logged and the trial flagged `clamped`, so analysis can exclude it.
-  const top = Math.max(Math.round(boxRect.bottom) + 8, Math.min(wantedTop, innerHeight - 56 - 16));
+  const top = Math.max(Math.round(boxRect.bottom) + 8, Math.min(wantedTop, innerHeight - 56 * ui - 16));
   const clamped = top < wantedTop;
   const prompt = mode === "DIGI"
     ? el("button", { class: "resume-prompt resume-btn", type: "button" }, el("span", { class: "play-ico", "aria-hidden": "true" }), el("span", { class: "resume-label" }, content.resume.digiButton))
@@ -77,7 +79,7 @@ export async function runResumption({ mode, task, audio, cfg, content, n, practi
   });
 
   const rect = settledRect(prompt);   // measured at its resting place; logged on the first painted frame (or 50 ms, whichever is first)
-  onFirstFrame(() => log("resume_prompt_shown", { ...base, aoi_prompt: { x: rect.left, y: rect.top, w: rect.width, h: rect.height }, gap_below_box: Math.round(rect.top - boxRect.bottom), clamped, viewport: { w: innerWidth, h: innerHeight } }));
+  onFirstFrame(() => log("resume_prompt_shown", { ...base, aoi_prompt: { x: rect.left, y: rect.top, w: rect.width, h: rect.height }, gap_below_box: Math.round(rect.top - boxRect.bottom), clamped, ui_scale: ui, viewport: { w: innerWidth, h: innerHeight } }));
 
   if (mode === "DIGI") {
     document.addEventListener("mousemove", (e) => log("mouse_move_first", { ...base, x: e.clientX, y: e.clientY }, e.timeStamp), { once: true, capture: true });

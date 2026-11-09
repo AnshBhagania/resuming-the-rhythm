@@ -54,7 +54,7 @@ export const CONTENT = {
     screenOk: "Screen size OK.",
     drmOk: "This browser can play protected audio.",
     drmMissing: "This browser cannot play the study music (protected audio is not available). Please open the link in Google Chrome on a laptop or desktop computer.",
-    screenBad: "Your window is too small. Use a laptop or desktop screen of at least 1280 x 720 and maximise the browser window."
+    screenSmall: "Your window is quite small, so the study will shrink to fit. A larger or full-screen window works best."
   },
 
   music: {

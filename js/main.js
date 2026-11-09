@@ -6,6 +6,7 @@ import { el, screen, mount } from "./ui.js";
 import { createAudio } from "./audio.js";
 import { startDb } from "./db.js";
 import { setSoundMuted } from "./sound.js";
+import { initLayout } from "./layout.js";
 import { loadSettings } from "./settings.js";
 import { createGaze } from "./gaze.js";
 
@@ -41,6 +42,7 @@ async function boot() {
     step: params.get("debug") === "1" ? params.get("step") : null   // jump straight to a screen (debug runs only)
   };
 
+  initLayout({ debug: flags.debug });
   const session = createSession({ pid, pidMissing, flags });
   const remote = await loadSettings();                     // admin-editable settings (falls back to defaults after 2.5 s)
   session.cfg.gaze = { ...remote.gaze };

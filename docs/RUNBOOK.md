@@ -8,7 +8,7 @@
 4. Do one full dry run yourself with `&dryrun=1` (about 3 minutes) on the same kind of laptop participants will use.
 
 ## Per session
-- Send the participant their link (`?pid=P07&k=...`). Chrome on a laptop or desktop, headphones, window at least 1280 x 720.
+- Send the participant their link (`?pid=P07&k=...`). Chrome on a laptop or desktop, headphones. Any window size works (see Screen size below).
 - Watch the **Sessions** tab: status goes active -> finished. "stopped" means no events for over a minute.
 - Issues to look at afterwards (Sessions badges, **Issues** tab): `audio_error`, `interruption_timeout`, hidden tab, upload errors.
 - Backup: the last screen offers "Download backup (JSON)". Ask for it if the upload line says it did not finish.
@@ -67,13 +67,20 @@ See `docs/TESTING.md` for everything that still needs a person, a real device or
 - Reopened word: the first `word_done` stays in the log, then a `word_reopen` event, then a new `word_done` with `reopened: true`. **Analysis should use the LAST `word_done` per word idx and exclude reopened words from per-word speed (their time includes the pause).**
 - Every repaint is self-checked: if the screen ever shows something other than the target plus the typed extras, a `ui_mismatch` event is logged (shown on the admin Issues tab).
 
+## Screen size
+There is no minimum window size. Laptops differ and a full-screen browser still loses height to toolbars, so the study scales itself: one factor `ui_scale` (never above 1,
+never below 0.5) shrinks the typing box, the resume prompt, the 250 px gap and the email card together, so their proportions never change. At 1280 x 720 and above the scale is 1.
+The pre-check only shows a gentle note when the window is small (scale under 0.8) and never blocks. Phones and tablets are still sent away.
+`ui_scale` is logged (`ui_scale` event on changes, and in `typing_ready`, `email_shown`, `resume_prompt_shown`). Positions and sizes of the areas of interest are logged in real pixels,
+so gaze analysis uses the logged rectangles directly. Typing speed in characters per second is unaffected, but note the scale in each session when comparing across participants.
+
 ## Resume prompt behaviour
-- The prompt sits 250 px below the text box. In a window too short to show it there, it is kept on screen instead, `clamped: true` is logged with the real gap and the viewport size,
-  and analysis should exclude those trials. (The pre-check requires a window of at least 1280 x 720, so this only happens when the window is shrunk later or in debug runs.)
+- The prompt sits 250 design-px below the text box, scaled with everything else (see Screen size). In the rare case it still cannot fit, it is kept on screen,
+  `clamped: true` is logged with the real gap and the viewport size, and analysis should exclude that trial.
 - Browser shortcuts (Ctrl/Cmd combos such as zoom, F-keys) work while a prompt waits; they are logged as `key_shortcut`, not as wrong inputs.
 
 ## Data caveats by app version
-- **Sessions logged as version 0.8.0 (everything before the 0.8.1 release) are pre-release test data.** They ran older typing and eye-tracking code, and the logged prompt rectangles are wrong:
+- **Sessions logged as version 0.8.0 (everything before the 0.8.1 release) are pre-release test data. Sessions before 0.8.3 used a fixed layout and a 1280 x 720 minimum.** They ran older typing and eye-tracking code, and the logged prompt rectangles are wrong:
   resume prompts are logged about 110 px too far right and 28 px too low, and the email card 28 px too low (an animation offset). From 0.8.1 the logged rectangles are the resting positions.
 - Check `session_start.app_version` before analysing a session.
 

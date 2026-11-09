@@ -1,24 +1,23 @@
 import { el, screen, mount, continueBtn } from "../ui.js";
 import { log } from "../log.js";
 import { probeLatency, logKeyboardLayout, logAudioDevice } from "../probe.js";
+import { computeScale } from "../layout.js";
 
 export function render(root, api) {
   const c = api.content.precheck;
-  const min = api.cfg.minScreen;
   const state = { headphones: false, keyboard: false };
   // Spotify playback needs DRM (Widevine). Check it now so a browser that cannot play is caught before the music step.
   const needsDrm = api.session.audio.kind === "spotify";
   let drmOk = !needsDrm, drmChecked = !needsDrm;
   probeLatency(api.cfg); logKeyboardLayout(); logAudioDevice();   // non-blocking, logged for analysis
 
-  const sizeOk = () => api.session.flags.debug || (innerWidth >= min.w && innerHeight >= min.h);
   const btn = continueBtn(() => {
     log("answer", {
       id: "precheck",
       headphones: state.headphones,
       keyboard_ok: state.keyboard,
       window: { w: innerWidth, h: innerHeight },
-      size_ok: innerWidth >= min.w && innerHeight >= min.h
+      ui_scale: Number(computeScale().toFixed(3))
     });
     window.removeEventListener("resize", update);
     api.next();
@@ -30,13 +29,14 @@ export function render(root, api) {
   const kbInput = el("input", { type: "text", class: "kb", autocomplete: "off", spellcheck: "false", oninput: () => { state.keyboard = kbInput.value.trim().toLowerCase() === c.keyboardWord; update(); } });
 
   function update() {
-    const ok = sizeOk();
-    sizeLine.textContent = ok ? c.screenOk : c.screenBad;
-    sizeLine.className = "status " + (ok ? "ok" : "bad");
+    // No minimum size: the layout scales to the window. Only a gentle note when it has to shrink a lot.
+    const small = computeScale() < 0.8;
+    sizeLine.textContent = small ? c.screenSmall : c.screenOk;
+    sizeLine.className = "status " + (small ? "warn" : "ok");
     drmLine.textContent = !needsDrm || !drmChecked ? "" : drmOk ? c.drmOk : c.drmMissing;
     drmLine.className = "status " + (drmOk ? "ok" : "bad");
     const drmPass = drmOk || !drmChecked || api.session.flags.debug;   // debug runs may continue without DRM (they cannot play Spotify)
-    btn.disabled = !(ok && state.headphones && state.keyboard && drmPass);
+    btn.disabled = !(state.headphones && state.keyboard && drmPass);
   }
   window.addEventListener("resize", update);
 
