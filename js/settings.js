@@ -25,6 +25,7 @@ export function sanitizePhysical(raw = {}) {
   return {
     type: ["key", "gamepad", "media"].includes(raw.type) ? raw.type : d.type,
     key: typeof raw.key === "string" && raw.key.length >= 1 && raw.key.length <= 20 ? raw.key : d.key,
+    code: typeof raw.code === "string" && /^[A-Za-z0-9]{0,24}$/.test(raw.code) ? raw.code : d.code,   // "" = match by key instead
     gamepadButton: Math.round(clamp(raw.gamepadButton, -1, 31, d.gamepadButton)),
     mediaAction: ["any", "play", "pause", "nexttrack", "previoustrack", "stop"].includes(raw.mediaAction) ? raw.mediaAction : d.mediaAction,
     label: typeof raw.label === "string" && raw.label.trim() && raw.label.length <= 30 ? raw.label.trim() : d.label

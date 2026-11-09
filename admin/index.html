@@ -428,19 +428,20 @@ const GAZE_FIELDS = [
 ];
 const GAZE_DEFAULTS = { enabled: true, optional: true, gridCols: 3, gridRows: 3, clicksPerPoint: 5, validationDwellMs: 2500, validationSettleMs: 1000, maxErrorPx: 250, maxAttempts: 3, sampleCapHz: 30 };
 let currentSettings = {};
-const PHYS_DEFAULTS = { type: "key", key: "F9", gamepadButton: -1, mediaAction: "any", label: "button" };
+const PHYS_DEFAULTS = { type: "key", key: "F9", code: "NumpadEnter", gamepadButton: -1, mediaAction: "any", label: "marked key" };
 function renderPhysForm(p) {
   const field = (label, input) => el("label", {}, el("span", { textContent: label }), input);
   const sel = (id, opts, val) => { const s = el("select", { id }); opts.forEach(o => s.append(el("option", { value: o, textContent: o, selected: o === val }))); return s; };
   $("physForm").replaceChildren(
     field("Device type", sel("ph_type", ["key", "gamepad", "media"], p.type)),
-    field("Key (type: key), e.g. F9, Enter, p", el("input", { id: "ph_key", value: p.key, maxLength: 20, size: 10 })),
+    field("Key position (code), e.g. NumpadEnter, Numpad0. Overrides the key below", el("input", { id: "ph_code", value: p.code ?? "", maxLength: 24, size: 14 })),
+    field("Key, only used if the position is empty", el("input", { id: "ph_key", value: p.key, maxLength: 20, size: 10 })),
     field("Gamepad button (-1 = any)", el("input", { id: "ph_gamepadButton", type: "number", value: p.gamepadButton, min: -1, max: 31 })),
     field("Media action (type: media)", sel("ph_mediaAction", ["any", "play", "pause", "nexttrack", "previoustrack", "stop"], p.mediaAction)),
     field("Name shown to participants", el("input", { id: "ph_label", value: p.label, maxLength: 30, size: 16 })));
 }
 function readPhysForm() {
-  return { type: $("ph_type").value, key: $("ph_key").value || PHYS_DEFAULTS.key, gamepadButton: Math.max(-1, Math.min(31, Math.round(+$("ph_gamepadButton").value || -1))),
+  return { type: $("ph_type").value, key: $("ph_key").value || PHYS_DEFAULTS.key, code: $("ph_code").value.trim().replace(/[^A-Za-z0-9]/g, ""), gamepadButton: Math.max(-1, Math.min(31, Math.round(+$("ph_gamepadButton").value || -1))),
     mediaAction: $("ph_mediaAction").value, label: $("ph_label").value.trim() || PHYS_DEFAULTS.label };
 }
 function renderGazeForm(g) {

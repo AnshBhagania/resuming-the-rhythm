@@ -36,9 +36,19 @@ Serve the repo with any static server on **127.0.0.1** (not localhost; browsers 
   raise the limit or enlarge the areas of interest in analysis.
 
 ## Physical button
-Admin **Settings** tab, "Physical resume button": device type (`key`, `gamepad`, `media`), the key or button, and the name participants see
-("Press the [name] to resume music"). Use the **physical button test** (also `?pid=CAL&inputtest=1`) to see what a device sends and to check 20 of 20 presses.
-Anything that types a key works with type `key`. The default F9 is only a placeholder (on Macs F-keys are media keys unless Fn is held).
+Planned setup: an external Bluetooth keyboard (full size with numpad) next to the participant, with ONE key marked by a sticker. Participants keep typing on their own laptop keyboard.
+- **Recommended key: Numpad Enter** (the tall double-height key at the right edge of the numpad). Largest target, easy to find without looking, and the laptop's
+  own Enter has a different key position, so only this key counts. Alternative: Numpad 0 (the wide key bottom-left of the numpad).
+- Admin **Settings** tab, "Physical resume button": device type `key`, **Key position (code) = `NumpadEnter`** (default), and "Name shown to participants" = `marked key`
+  (participants read "Press the marked key to resume music"). Leave the code empty to match by the typed key instead.
+- The app ignores every numpad key while typing, so stray presses on the external keyboard never type into the task (logged as `key_ignored`, reason `numpad`).
+  Any other key pressed during the prompt is logged as `wrong_input`.
+- Sticker: a brightly coloured, matt label covering the key legend; consider covering or taping the rest of the numpad (or tell participants to touch only the marked key).
+  Place the keyboard on the participant's dominant-hand side.
+- Pair the keyboard to the participant's laptop BEFORE they sit down. On a Mac, a newly paired keyboard may trigger "Keyboard Setup Assistant"; finish it first.
+- **Bluetooth risk to test, not assumed:** keyboards go to sleep when idle and the first key press after waking can be delayed or lost. That would add lag only in the PHYS
+  condition. Each block starts with a flagged rehearsal that wakes the keyboard, but test it: press the key after 1, 2 and 5 minutes idle and watch the physical button test.
+- Use the **physical button test** (admin Settings or Tester tab; also `?pid=CAL&inputtest=1`) to check 20 of 20 presses and to see the exact key position (`code`) the browser receives.
 
 ## Testing checklist
 See `docs/TESTING.md` for everything that still needs a person, a real device or real Chrome.

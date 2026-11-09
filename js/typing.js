@@ -136,6 +136,13 @@ export function createTypingTask({ parent, passage, seconds, label, debug = fals
     const k = e.key;
     if (MODIFIER_KEYS.has(k) || e.isComposing) return;
     if (e.ctrlKey || e.metaKey) { if (k.toLowerCase() === "v") e.preventDefault(); return; } // let browser shortcuts through, block paste
+    // The words are letters only, so numpad keys never belong to the task. This also protects the task from stray presses on an
+    // external numpad keyboard that serves as the physical resume button.
+    if (e.code && e.code.startsWith("Numpad")) {
+      e.preventDefault();
+      log(locked ? "key_blocked" : "key_ignored", keyData(e, locked ? { reason: lockReason } : { reason: "numpad" }), t);
+      return;
+    }
 
     const isSpace = k === " ";
     const isBack = k === "Backspace";

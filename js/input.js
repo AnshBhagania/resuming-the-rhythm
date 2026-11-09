@@ -57,8 +57,11 @@ export function createPhysicalSource(p) {
   return {
     type: p.type,
     // Keyboard-style devices are matched on the normal keydown stream (so they can be told apart from wrong keys).
+    // With a key `code` set (e.g. "NumpadEnter") the PHYSICAL key position is matched, so the laptop's own Enter or 5 never counts.
     keyMatches(e) {
-      return p.type === "key" && e.type === "keydown" && !e.repeat && e.key === p.key ? { source: "key", key: e.key, code: e.code } : null;
+      if (p.type !== "key" || e.type !== "keydown" || e.repeat) return null;
+      const hit = p.code ? e.code === p.code : e.key === p.key;
+      return hit ? { source: "key", key: e.key, code: e.code } : null;
     },
     // Non-keyboard devices: calls onIntent({source, ...detail, t}) for each valid press. Returns a stop function.
     start(onIntent) {

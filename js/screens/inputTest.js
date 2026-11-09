@@ -16,7 +16,7 @@ export function render(root, api) {
   let detected = 0, lastT = null, stopRaw = null, stopDevice = null;
   const intervals = [];
 
-  const describe = p.type === "key" ? `a keyboard-type device sending the key "${p.key}"`
+  const describe = p.type === "key" ? (p.code ? `a keyboard key at position "${p.code}" (the laptop's own keys are ignored)` : `a keyboard-type device sending the key "${p.key}"`)
     : p.type === "gamepad" ? `a gamepad-type device, button ${p.gamepadButton < 0 ? "(any)" : p.gamepadButton}`
     : `a media button (${p.mediaAction}), e.g. headphone remote or laptop media key`;
 

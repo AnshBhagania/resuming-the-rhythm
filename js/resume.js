@@ -83,18 +83,18 @@ function finish(task, n, playResult) {
 
 // Logs every input that is not the valid resume input as wrong_input (and swallows it).
 function listenWrongInputs({ mode, cfg, base, prompt, valid, onValid }) {
+  const physical = createPhysicalSource(cfg.physical);
   const handler = (e) => {
     if (e.type === "mousedown") return;                 // classify on click only
     if (e.type === "keydown" && ["Shift", "Control", "Alt", "Meta", "CapsLock"].includes(e.key)) return;
     const v = valid(e);
     if (v) { e.preventDefault(); e.stopPropagation(); onValid?.(e, v); return; }
     e.preventDefault();
-    const physKey = cfg.physical.type === "key" ? cfg.physical.key : null;
     const kind = e.type === "click"
       ? (prompt && prompt.contains(e.target) ? "click_on_card" : "click_elsewhere")
-      : (physKey && e.key === physKey ? "physical_key" : "keyboard");
+      : (physical.keyMatches(e) ? "physical_key" : "keyboard");
     if (mode === "DIGI" && e.type === "click" && !prompt?.contains(e.target)) return;  // stray clicks are not errors in DIGI
-    log("wrong_input", { ...base, kind, key: e.type === "keydown" ? e.key : null }, e.timeStamp);
+    log("wrong_input", { ...base, kind, key: e.type === "keydown" ? e.key : null, code: e.type === "keydown" ? e.code : null }, e.timeStamp);
   };
   document.addEventListener("keydown", handler, true);
   document.addEventListener("click", handler, true);

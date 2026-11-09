@@ -21,7 +21,7 @@ export const CONFIG = {
   leaseHeartbeatMs: 45000,
   // Defaults for eye tracking; the admin page can override these (see settings.js, table study_settings).
   // Physical resume input (device undecided): key | gamepad | media. Admin-editable. F9 is a placeholder.
-  physical: { type: "key", key: "F9", gamepadButton: -1, mediaAction: "any", label: "button" },
+  physical: { type: "key", key: "F9", code: "NumpadEnter", gamepadButton: -1, mediaAction: "any", label: "marked key" },
   gaze: { enabled: true, optional: true, gridCols: 3, gridRows: 3, clicksPerPoint: 5, validationDwellMs: 2500, validationSettleMs: 1000, maxErrorPx: 250, maxAttempts: 3, sampleCapHz: 30 },
   flushIntervalMs: 2000,
   flushMaxEvents: 200,
