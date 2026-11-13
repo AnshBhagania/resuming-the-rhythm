@@ -25,7 +25,7 @@ Interruption sequence: typing greys out and locks, music pauses, notification so
 
 Typing task: Monkeytype-style, random common English words (Monkeytype `english_1k`, filtered), letters only, mean word length about 4.9. Passages are seeded, so the same seed gives the same word list. Rules: Space submits a word. A wrong word cannot be left behind silently: Backspace on an empty word steps back into the previous word (config `reopenCorrectWords: true` allows this even for correctly typed words). Ctrl/Alt/Cmd+Backspace deletes the current word. At most 6 extra letters can be typed beyond a word. Paste is blocked. Numpad keys are ignored by the task (they belong to the PHYS key).
 
-Questionnaires after each block (1 to 7): workload, control, ease. Final: rank the three modes, free comment. Demographics: age, gender, typing frequency, music while working, attention condition. All participant text is placeholder at the moment.
+Questionnaires after each block (1 to 7): workload, control, ease. Final: rank the three modes, free comment. Demographics: age, gender, typing frequency, music while working, attention condition (yes / no / prefer not to say). Participant text is drafted (v1-2026-11 consent) and pending ethics approval.
 
 ## 3. Storage and event envelope
 
@@ -170,7 +170,7 @@ Do not infer anything about the research question from n = 1 with 4 interruption
 6. **Resume action time is part of the outcome.** PHYS and DIGI add a deliberate action. Whether recovery should include or exclude it is an analysis choice (resumption lag includes it, restart excludes it).
 7. **Gaze quality.** Drift, about 200 to 300 px error, and no recalibration during the session. The resume button is 56 px high.
 8. **Physical key learnability.** First-time confusion in PHYS.
-9. **Unanalysed / not built:** analysis scripts or SQL views, exclusion rules written down in advance, session resume after a page refresh, final participant texts and questionnaire wording (placeholders), the lyrics versus no-lyrics music question.
+9. **Unanalysed / not built:** analysis scripts or SQL views, exclusion rules written down in advance, session resume after a page refresh, ethics approval of the participant texts and questionnaire wording, the lyrics versus no-lyrics music question.
 10. **Participant's own music.** Chosen by the participant, so loudness, genre, lyrics and familiarity vary and are not controlled. Track and playlist are logged.
 
 ## 9. Questions for the analysis discussion

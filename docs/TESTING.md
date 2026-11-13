@@ -100,7 +100,7 @@ Device is not decided. The app supports three kinds, set in admin Settings: `key
 | Item | Status |
 |---|---|
 | KTH ethics / data handling sign-off (camera, Spotify accounts, remote participants, data storage in Supabase EU region) | **Open**, yours |
-| Final text: welcome, consent (incl. camera), camera explanation, instructions, block intros, questionnaires, demographics (incl. the attention-condition question), debrief | **Open**, all placeholders in `js/content.js` |
+| Final text: welcome, consent (incl. camera), camera explanation, instructions, block intros, questionnaires, demographics (incl. the attention-condition question), debrief | Drafted (0.8.7, no placeholders left in `js/content.js`). **Open:** consent wording needs supervisor / ethics approval before real participants |
 | Do you need a no-music reference block? | **Open** (context file) |
 | Lyrics: require instrumental playlists or ask a lyrics yes/no? | **Open** |
 | Analysis script: compute resumption lag, recovery time, accuracy from the event log (definitions in the context file section 8) | **Not started** (offer: Python or R notebook against a CSV export) |

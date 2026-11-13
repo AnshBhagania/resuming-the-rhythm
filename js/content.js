@@ -1,5 +1,5 @@
-// All participant-facing text lives here, in the order participants see it. Everything marked [PLACEHOLDER] is to be replaced
-// with final text. Strings with {n}, {s}, {sent}, {total}, {modes} or [button] are filled in by the app.
+// All participant-facing text lives here, in the order participants see it. A blank line (\n\n) inside a body starts a new paragraph.
+// Strings with {n}, {s}, {sent}, {total}, {modes} or [button] are filled in by the app.
 export const CONTENT = {
   // Shared by several screens
   ui: {
@@ -23,18 +23,21 @@ export const CONTENT = {
     body: "This study runs on a laptop or desktop computer in Chrome. Please open the link again on a computer."
   },
 
-  welcome: { title: "Welcome", body: "[PLACEHOLDER] Welcome text." },
+  welcome: {
+    title: "Welcome",
+    body: "Thank you for taking part. In this study you type lists of words while your own music plays in the background. Every now and then an email pops up and the music pauses. You answer the email, and then the music comes back. In each part of the study it comes back in a different way, and we want to learn how that affects getting back into your typing.\n\nThe session takes about 35 minutes. Please sit somewhere quiet and use a laptop or desktop computer with headphones, in Google Chrome."
+  },
 
   consent: {
     title: "Consent",
-    body: "[PLACEHOLDER] Consent text (including camera / face recording).",
-    checkbox: "[PLACEHOLDER] I have read the information and agree to take part.",
-    version: "v0-placeholder"
+    body: "Please read this before you decide to take part.\n\nWhat the study is about: how the way background music is brought back after an interruption affects how quickly and accurately people return to typing.\n\nWhat you will do: about 35 minutes of typing with your own music from Spotify playing. Emails will pop up and you answer them with the keyboard. The music comes back in a different way in each of three parts. You also answer a few short questions.\n\nWhat we record: your key presses and their timing, your answers to the emails and questions, the Spotify playlist you choose, and basic information about your browser, computer and screen. If you allow your camera, we also estimate where on the screen you look and save only those screen coordinates. No video, photos or sound from your camera or microphone are recorded or stored. We do not ask for your name. Your data is stored under a participant code on a secure cloud server.\n\nYour rights: taking part is voluntary. You can stop at any time by closing this tab, and you can ask the researcher to delete your data afterwards. The data is only used for this course project, and results are reported for the group, not for individuals.",
+    checkbox: "I have read the information above and I agree to take part.",
+    version: "v1-2026-11"
   },
 
   camera: {
     title: "Camera",
-    body: "[PLACEHOLDER] We would like to use your webcam to estimate where on the screen you are looking. No video or images are recorded or stored, only screen coordinates.",
+    body: "We would like to use your webcam to estimate where on the screen you are looking. The camera image is processed on your own computer. No video or images are recorded, stored or sent anywhere. Only estimated screen coordinates are saved.",
     allow: "Allow camera",
     skip: "Continue without eye tracking",
     asking: "Please allow camera access in your browser...",
@@ -55,12 +58,12 @@ export const CONTENT = {
 
   precheck: {
     title: "Before we start",
-    body: "[PLACEHOLDER] Please use headphones, close other apps, and use a real keyboard.",
+    body: "A few quick checks before we start. Please wear headphones, close other apps and browser tabs (especially anything that uses the camera or plays sound), and turn off notifications on your computer so that only the study interrupts you.",
     headphones: "I am wearing headphones.",
     deviceTitle: "About your setup",
-    touchTyping: { label: "[PLACEHOLDER] Can you type without looking at the keys?", options: [["yes", "Yes"], ["mostly", "Mostly"], ["no", "No"]] },
-    typingKeyboard: { label: "[PLACEHOLDER] Which keyboard will you type on?", options: [["laptop", "The laptop's built-in keyboard"], ["external", "An external keyboard"]] },
-    pointer: { label: "[PLACEHOLDER] What do you use to move the pointer and click?", options: [["trackpad", "Trackpad"], ["mouse", "Mouse"]] },
+    touchTyping: { label: "Can you type without looking at the keys?", options: [["yes", "Yes"], ["mostly", "Mostly"], ["no", "No"]] },
+    typingKeyboard: { label: "Which keyboard will you type on?", options: [["laptop", "The laptop's built-in keyboard"], ["external", "An external keyboard"]] },
+    pointer: { label: "What do you use to move the pointer and click?", options: [["trackpad", "Trackpad"], ["mouse", "Mouse"]] },
     keyboardPrompt: "Keyboard check: type the word below.",
     keyboardWord: "rhythm",
     screenOk: "Screen size OK.",
@@ -71,7 +74,7 @@ export const CONTENT = {
 
   music: {
     title: "Choose your music",
-    body: "[PLACEHOLDER] Paste a link to a Spotify playlist you like to work to. The music repeats when the playlist ends.",
+    body: "Choose music you like to work to. In Spotify, open a playlist, choose Share, then Copy link to playlist, and paste the link below. The music repeats when the playlist ends.",
     linkLabel: "Spotify playlist link",
     load: "Load playlist",
     test: "Play test sound",
@@ -92,17 +95,17 @@ export const CONTENT = {
   demographics: {
     title: "About you",
     items: [
-      { id: "age", label: "[PLACEHOLDER] Age", type: "number" },
-      { id: "gender", label: "[PLACEHOLDER] Gender", type: "choice", options: ["Woman", "Man", "Non-binary", "Prefer not to say"] },
-      { id: "typing_freq", label: "[PLACEHOLDER] How often do you type on a computer?", type: "choice", options: ["Daily", "Weekly", "Rarely"] },
-      { id: "music_while_working", label: "[PLACEHOLDER] Do you usually listen to music while working?", type: "yesno" },
-      { id: "attention_condition", label: "[PLACEHOLDER] Attention-condition question (to be supplied): do you have a condition that affects attention?", type: "yesno" }
+      { id: "age", label: "Age", type: "number" },
+      { id: "gender", label: "Gender", type: "choice", options: ["Woman", "Man", "Non-binary", "Prefer not to say"] },
+      { id: "typing_freq", label: "How often do you type on a computer?", type: "choice", options: ["Daily", "Weekly", "Rarely"] },
+      { id: "music_while_working", label: "Do you usually listen to music while working?", type: "yesno" },
+      { id: "attention_condition", label: "Do you have a condition that affects your attention? You can choose not to say.", type: "choice", options: ["No", "Yes", "Prefer not to say"] }
     ]
   },
 
   gaze: {
     title: "Eye tracking setup",
-    body: "[PLACEHOLDER] This takes about 40 seconds and is done only once. You will click a series of dots while looking at each one, then look at a few dots without clicking.",
+    body: "This takes about 40 seconds and is done only once. You will click a series of dots while looking at each one, then look at a few dots without clicking.",
     posture: "Sit about an arm's length from the screen, face the camera in even light, and keep your head as still as you can for the rest of the study.",
     start: "Start",
     loading: "Starting the camera and loading the eye tracking model (about 10 MB, this can take a minute)...",
@@ -123,25 +126,28 @@ export const CONTENT = {
     howToRead: "How to read this: each blue dot is a spot you were asked to look at, each orange dot is where the tracker thought you looked (the median of its samples), and the line between them is the error. Samples is how many gaze readings were captured at that spot (about 30 a second); \"no data\" means no face was seen there.",
   },
 
-  instructions: { title: "Instructions", body: "[PLACEHOLDER] Task instructions." },
+  instructions: {
+    title: "Instructions",
+    body: "You will type lists of common English words. Type each word and press Space to move on to the next one. If you make a mistake you can correct it with Backspace; Backspace at the start of a word takes you back into the previous word. Type as quickly and accurately as you comfortably can, as you would in normal work.\n\nYour own music plays while you type. Every minute or so an email pops up, the music pauses and your typing is locked. Read the email, press 1, 2 or 3 on your keyboard to choose an answer, type a short reply of at least 3 words, and press Enter. Then you bring the music back. How you do that is explained before each part, and each part starts with one practice email.\n\nFirst there is a short practice round and a typing test without interruptions. After that come three parts with interruptions, about six minutes each, and after each part three short questions. Please stay in this browser tab for the whole session."
+  },
 
   practice: {
     title: "Practice",
-    body: "[PLACEHOLDER] Practice round: just type. Nothing will interrupt you yet.",
+    body: "This is a short practice round with your music playing. Just type the words you see. Nothing will interrupt you yet.",
     durationNote: "Duration: {s} s."
   },
 
-  baseline: { title: "Baseline", body: "[PLACEHOLDER] Baseline typing, no interruptions.", durationNote: "Duration: {s} s." },
+  baseline: { title: "Baseline", body: "This is a typing test with your music playing and no interruptions. Type as quickly and accurately as you comfortably can.", durationNote: "Duration: {s} s." },
 
   blockIntro: {
     title: "Next block",
-    body: "[PLACEHOLDER] Block intro.",
-    rehearsalNote: "[PLACEHOLDER] Shortly after you start there is one practice interruption, so you can try how the music comes back in this block. Then the real block follows."
+    body: "Next is a typing part with email interruptions. Keep typing as you did before, and answer each email with the keyboard as described in the instructions.",
+    rehearsalNote: "Shortly after you start there is one practice email, so you can try how the music comes back in this part. The practice email does not count. The real part follows right after it."
   },
   modes: {
-    AUTO: "[PLACEHOLDER] In this block the music resumes by itself after you reply.",
-    DIGI: "[PLACEHOLDER] In this block, click the on-screen button to resume the music.",
-    PHYS: "[PLACEHOLDER] In this block, press the [button] to resume the music."
+    AUTO: "In this part, the music comes back by itself after you send your reply. Then keep typing.",
+    DIGI: "In this part, after you send your reply, click the on-screen button with the mouse or trackpad to bring the music back. Then keep typing.",
+    PHYS: "In this part, after you send your reply, press the [button] to bring the music back. Then keep typing."
   },
 
   // The email pop-up during typing
@@ -162,29 +168,29 @@ export const CONTENT = {
     autoNote: "Music resumed"
   },
 
-  typingDone: { title: "Finished", body: "[PLACEHOLDER] Time is up. Well done." },
+  typingDone: { title: "Finished", body: "Time is up. Well done." },
 
   questionnaire: {
     title: "Questions about this block",
     scale: { min: 1, max: 7, minLabel: "Not at all", maxLabel: "Very much" },
     items: [
-      { id: "workload", label: "[PLACEHOLDER] How mentally demanding was the task?" },
-      { id: "control", label: "[PLACEHOLDER] How much control did you feel over the music?" },
-      { id: "ease", label: "[PLACEHOLDER] How easy was it to get back to typing after the interruption?" }
+      { id: "workload", label: "How mentally demanding was the task?" },
+      { id: "control", label: "How much control did you feel over the music?" },
+      { id: "ease", label: "How easy was it to get back to typing after the interruptions?" }
     ]
   },
 
   debrief: {
     title: "Final questions",
-    body: "[PLACEHOLDER] Rank the three ways of resuming the music (1 = best).",
+    body: "Please rank the three ways of bringing the music back, from 1 (best) to 3 (worst). Use each number once.",
     rankLabels: { AUTO: "Music resumed automatically", DIGI: "On-screen button", PHYS: "Physical button" },
     rankPlaceholder: "Rank...",
-    commentLabel: "[PLACEHOLDER] Any comments?"
+    commentLabel: "Any comments? (optional)"
   },
 
   done: {
     title: "Done",
-    body: "[PLACEHOLDER] Thank you for taking part.",
+    body: "Thank you for taking part. Please keep this tab open until your results have been uploaded.",
     uploading: "Uploading your results...",
     uploaded: "Results uploaded ({n} events). You can close this tab.",
     notFinished: "Upload not finished ({sent}/{total}). Please download the backup and send it to the researcher.",

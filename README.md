@@ -19,7 +19,7 @@ index.html, css/style.css       the participant app (single page)
 js/main.js                      boot: URL flags, settings, audio, gaze, database, state machine
 js/session.js                   session setup, the ordered list of screens, state machine (logs state_enter)
 js/config.js                    all tunable numbers and defaults
-js/content.js                   ALL participant-facing text (placeholders until final text is supplied)
+js/content.js                   ALL participant-facing text (edit here)
 js/screens/*.js                 one module per screen (welcome ... done, plus gaze, music, inputTest)
 js/typing.js, passage.js        typing task engine, seeded passage generation
 js/interruption.js, resume.js   email pop-up and the AUTO / DIGI / PHYS resumption
@@ -30,7 +30,7 @@ js/gaze.js, gazeScore.js        eye tracking (WebGazer, mouse test source) and v
 js/log.js, db.js                event log and batched upload to Supabase
 js/settings.js, probe.js        admin-editable settings loader, network/keyboard/audio probes
 js/rng.js                       seeded random numbers (schedules and passages are replayable)
-data/words.json, emails.js      word pool and the 15 placeholder emails
+data/words.json, emails.js      word pool and the 15 study emails (3 practice, 12 study)
 admin/index.html                admin portal (sessions, issues, Spotify accounts, participant links, settings, tester)
 supabase/migrations/            database schema and functions
 supabase/functions/             Edge Functions: spotify-token (leases an account), spotify-admin (link/manage accounts)

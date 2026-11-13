@@ -241,3 +241,6 @@ kbd { font: 600 13px var(--mono); min-width: 26px; text-align: center; border: 1
 .em-steps li.done::before { content: "\2713"; background: var(--ok); border-color: var(--ok); color: #fff; }
 .em-steps li.done { color: var(--muted); }
 .em-opt { user-select: none; }
+
+/* participant texts may contain blank lines (paragraphs) */
+.screen p { white-space: pre-line; }

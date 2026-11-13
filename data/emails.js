@@ -1,5 +1,5 @@
 // 3 practice emails + 12 study emails. Study email n is tied to interruption number n (1..12), not to the mode.
-// PLACEHOLDER content: fictional senders and companies. Bodies are 40 to 60 words, one simple question each.
+// Fictional senders and companies. Bodies are 40 to 60 words, one simple question each.
 export const EMAILS = {
   practice: [
     {
