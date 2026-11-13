@@ -22,7 +22,7 @@ export function runInterruption({ task, email, n, k, practice = false, cfg, cont
     playNotification();                 // 3. notification sound
     log("notification_sound");
 
-    let stage = "choose", option = null, reply = "", timedOut = false, done = false, tooShort = false, nudge = false, clicks = 0;
+    let stage = "choose", option = null, reply = "", timedOut = false, done = false, tooShort = false, nudge = false, clicks = 0, changes = 0;
     let lastPointer = null;
 
     // Keyboard only, so every mode starts its resume step with the hands on the keyboard. A click does not select, but it is
@@ -104,7 +104,7 @@ export function runInterruption({ task, email, n, k, practice = false, cfg, cont
         log("reply_sent", {
           n, k, practice, email_id: email.id, option: option + 1, option_text: email.options[option],
           reply, reply_words: countWords(reply), timed_out: timedOut,
-          option_via: "key", clicks, cursor: lastPointer
+          option_via: "key", clicks, option_changes: changes, cursor: lastPointer
         }, t);
         overlay.remove();
         resolve({ replyT: t, timedOut });
@@ -116,6 +116,11 @@ export function runInterruption({ task, email, n, k, practice = false, cfg, cont
           log("email_option", { n, option: null }, t);
         } else reply = reply.slice(0, -1);
         update();
+        return;
+      }
+      // Replies are words, so digits are never typed: 1, 2, 3 change the chosen answer, other digits are ignored.
+      if (/^[0-9]$/.test(k_)) {
+        if (k_ === "1" || k_ === "2" || k_ === "3") { if (Number(k_) - 1 !== option) { changes++; choose(Number(k_) - 1, t); } }
         return;
       }
       if (k_.length === 1 && reply.length < MAX_REPLY_CHARS) { reply += k_; update(); }

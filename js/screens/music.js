@@ -9,7 +9,7 @@ export function render(root, api) {
   const btn = continueBtn(() => {
     if (testing) audio.pause("soundtest_end");
     audio.reset();
-    log("answer", { id: "music_setup", kind: audio.kind, name: info.name, uri: info.uri, total_ms: info.total_ms, n_tracks: info.n_tracks, volume: audio.volume });
+    log("answer", { id: "music_setup", kind: audio.kind, name: info.name, uri: info.uri, context_type: info.context_type ?? null, total_ms: info.total_ms, n_tracks: info.n_tracks, volume: audio.volume });
     audio.showStatus(false);
     offProblem();
     api.next();
@@ -34,7 +34,7 @@ export function render(root, api) {
   const rows = [el("p", {}, c.body)];
   let urlInput = null;
   if (audio.kind === "spotify") {
-    const input = urlInput = el("input", { type: "text", placeholder: "https://open.spotify.com/playlist/...", spellcheck: "false", autocomplete: "off" });
+    const input = urlInput = el("input", { type: "text", placeholder: "https://open.spotify.com/playlist/... or /album/...", spellcheck: "false", autocomplete: "off" });
     // Debug runs can paste the key here when the link had none; real participants never see this field.
     const keyInput = api.session.flags.debug && !api.session.studyKey && !audio.hasAdminLogin() ? el("input", { type: "text", placeholder: c.keyPlaceholder, spellcheck: "false", autocomplete: "off" }) : null;
     const load = el("button", { class: "primary", onclick: async () => {

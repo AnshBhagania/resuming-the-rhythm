@@ -10,6 +10,12 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // Researchers signed in to the admin page in this browser do not need the study key: their login token (same origin, shared localStorage)
 // is sent instead and checked by the token function. Participants never have one.
+// "https://open.spotify.com/playlist/ID?si=...", "/intl-de/album/ID", "spotify:album:ID" -> { type, id } (null when it is neither).
+export function parseSpotifyLink(url) {
+  const m = /(playlist|album)[/:]([A-Za-z0-9]{22})(?![A-Za-z0-9])/.exec(String(url || ""));
+  return m ? { type: m[1], id: m[2] } : null;
+}
+
 export function adminToken() {
   try {
     const raw = localStorage.getItem("sb-etdtijvlguuxqvehpdvn-auth-token");
@@ -72,7 +78,7 @@ export function createAudio({ kind, cfg, pid, studyKey, sessionId, silent = fals
 // ---------------------------------------------------------------- synthetic
 function syntheticImpl({ silent = false } = {}) {
   let ctx = null, master = null, oscs = [];
-  let volume = 0.5, startedAt = null, accumulated = 0;
+  let volume = 1, startedAt = null, accumulated = 0;   // default full: the computer volume is the real control
   const impl = {
     volume,
     async activate() {},
@@ -109,7 +115,7 @@ function syntheticImpl({ silent = false } = {}) {
 function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
   let player = null, deviceId = null, started = false, playlistUri = null;
   let token = null, tokenExp = 0;
-  let volume = 0.5;
+  let volume = 1;   // default full: the computer volume is the real control (a web page cannot read or set it)
   let last = { paused: true, position: 0, at: 0, trackId: null };
   const waiters = [];
   let sdkPromise = null, connectPromise = null;
@@ -178,8 +184,13 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
         player.addListener("player_state_changed", (s) => {
           if (!s) { impl.onError?.({ kind: "state_null_moved_to_other_device" }); return; }
           const t = performance.now();
-          const trackId = s.track_window?.current_track?.id ?? null;
-          if (trackId && trackId !== last.trackId) impl.onTrackChange?.({ track: trackId, name: s.track_window.current_track.name, position_ms: s.position });
+          const cur = s.track_window?.current_track;
+          const trackId = cur?.id ?? null;
+          if (trackId && trackId !== last.trackId) impl.onTrackChange?.({
+            track: trackId, name: cur.name, position_ms: s.position,
+            artists: (cur.artists || []).map((a) => a.name), album: cur.album?.name ?? null, duration_ms: cur.duration_ms ?? null,
+            track_uri: cur.uri ?? null, context_uri: s.context?.uri ?? null, shuffle: s.shuffle ?? null, repeat_mode: s.repeat_mode ?? null
+          });
           last = { paused: s.paused, position: s.position, at: t, trackId };
           if (!s.paused) while (waiters.length) waiters.shift()(t);
         });
@@ -198,17 +209,17 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
     // Spotify-owned playlists entirely from the Web API. Playback does not depend on those reads, so: read the
     // name if we can, otherwise accept the link and let playback prove it. The context repeats, so length is irrelevant.
     async loadPlaylist(url) {
-      const m = /playlist[/:]([A-Za-z0-9]{22})/.exec(url);
-      if (!m) throw new Error("Not a Spotify playlist link");
-      const id = m[1];
+      const link = parseSpotifyLink(url);
+      if (!link) throw new Error("Not a Spotify playlist or album link");
+      const { type, id } = link;
       let name = null, unverified = false;
-      const meta = await api(`/playlists/${id}?fields=name`);
+      const meta = await api(type === "album" ? `/albums/${id}` : `/playlists/${id}?fields=name`);
       if (meta.ok) name = (await meta.json()).name;
       else if (meta.status === 404 || meta.status === 403) unverified = true;   // Spotify-owned or private: cannot be read
-      else throw new Error("Could not read playlist (" + meta.status + ")");
-      playlistUri = "spotify:playlist:" + id;
+      else throw new Error(`Could not read ${type} (${meta.status})`);
+      playlistUri = `spotify:${type}:${id}`;
       started = false;
-      return { name: name || "Spotify playlist", total_ms: null, n_tracks: null, uri: playlistUri, unverified };
+      return { name: name || (type === "album" ? "Spotify album" : "Spotify playlist"), total_ms: null, n_tracks: null, uri: playlistUri, context_type: type, unverified };
     },
     reset() { started = false; },
     unlock() { player?.activateElement?.(); },

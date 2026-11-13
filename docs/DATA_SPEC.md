@@ -67,10 +67,10 @@ Every event has:
 | `notification_sound` | (none) |
 | `email_shown` | n, email_id, ui_scale, aoi_prompt {x,y,w,h} (card rectangle) |
 | `email_key` | key, code, stage (`choose`/`reply`), repeat |
-| `email_option` | n, option (1 to 3, or null when stepped back), option_text |
+| `email_option` | n, option (1 to 3, or null when stepped back), option_text. Logged again each time the answer is changed in the reply stage (digits are never typed into the reply). |
 | `email_click` | n, option, stage, x, y (a click on an answer; it does not select) |
 | `interruption_timeout` | n, email_id, practice (60 s without a reply) |
-| `reply_sent` | n, k, practice, email_id, option, option_text, reply (the text), reply_words, timed_out, option_via (`key`), clicks, cursor {x,y} (last mouse position) |
+| `reply_sent` | n, k, practice, email_id, option, option_text, reply (the text), reply_words, timed_out, option_via (`key`), clicks, option_changes (times the answer was changed with 1/2/3 after the first choice), cursor {x,y} (last mouse position) |
 
 ### Resumption
 | type | data |
@@ -84,7 +84,7 @@ Every event has:
 | `typing_unlock` | n, play_timed_out, play_called_to_playing_ms (delay until Spotify confirms playing). Typing is allowed again from here. |
 
 ### Music
-`audio_play_called` (reason, position_ms, fade_ms), `music_play` (reason, position_ms, track), `music_pause` (reason, position_ms, track), `track_change` (name, track, position_ms), `audio_error` (kind, message; kinds include play_timeout, DRM, missing_key, setup), `spotify_account` (label of the shared account that was used). `answer` with id `music_setup` records the playlist and volume chosen.
+`audio_play_called` (reason, position_ms, fade_ms), `music_play` (reason, position_ms, track), `music_pause` (reason, position_ms, track), `track_change` (track id, name, artists[], album, duration_ms, track_uri, context_uri, shuffle, repeat_mode, position_ms), `audio_error` (kind, message; kinds include play_timeout, DRM, missing_key, setup), `spotify_account` (label of the shared account that was used). `answer` with id `music_setup` records the playlist or album (`uri`, `context_type` playlist/album) and the study volume (default 1 = full; the computer volume is the real control).
 
 ### Eye tracking (WebGazer, webcam, in browser; only coordinates are logged, never video)
 | type | data |

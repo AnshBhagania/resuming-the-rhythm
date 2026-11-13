@@ -74,12 +74,12 @@ export const CONTENT = {
 
   music: {
     title: "Choose your music",
-    body: "Choose music you like to work to. In Spotify, open a playlist, choose Share, then Copy link to playlist, and paste the link below. The music repeats when the playlist ends.",
-    linkLabel: "Spotify playlist link",
-    load: "Load playlist",
+    body: "Choose music you like to work to. In Spotify, open a playlist or an album, choose Share, then Copy link, and paste the link below. The music repeats when it ends.",
+    linkLabel: "Spotify playlist or album link",
+    load: "Load music",
     test: "Play test sound",
     stop: "Stop",
-    volume: "Set a comfortable volume, then continue. It will stay fixed during the study.",
+    volume: "Play the test sound and set a comfortable volume with your computer's volume keys. Leave the slider below at the far right (full), and only move it left if you need to go even quieter. The volume will stay fixed during the study.",
     connecting: "Connecting to Spotify...",
     unverified: "Spotify does not let us preview this playlist, so use the test sound below to check it plays.",
     missingKey: "This link is missing its access key. Please ask the researcher for a new link. (Researchers: sign in to the admin page in this browser, then reload.)",
@@ -155,7 +155,7 @@ export const CONTENT = {
     stepChoose: "Choose an answer: press 1, 2 or 3 on your keyboard.",
     hintClick: "Clicking does not select. Please press the number key 1, 2 or 3 on your keyboard.",
     hintClickLater: "Your answer is already chosen. Type your reply and press Enter.",
-    stepReply: "Type a short reply (at least {n} words).",
+    stepReply: "Type a short reply (at least {n} words). To change your answer, press 1, 2 or 3 again.",
     stepSend: "Press Enter to send.",
     hintTooShort: "Please write at least {n} words before sending.",
     hintTimeout: "Please reply to continue."
