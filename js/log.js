@@ -7,7 +7,12 @@ let persistTimer = null;
 let onEventHook = null;
 export function setOnEvent(fn) { onEventHook = fn; }
 
-export function setContext(patch) { Object.assign(ctx, patch); }
+export function setContext(patch) {
+  Object.assign(ctx, patch);
+  // Events logged before the session existed (e.g. ui_scale, 400 ms after boot, while the settings were still loading) carry no ids:
+  // give them the ids now, otherwise the database rejects the whole first upload batch (session_id is NOT NULL).
+  if (ctx.session_id) for (const e of buffer) if (e.session_id == null) { e.session_id = ctx.session_id; e.pid = ctx.pid; }
+}
 export function getContext() { return { ...ctx }; }
 
 export function log(type, data = {}, t) {

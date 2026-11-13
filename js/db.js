@@ -4,7 +4,7 @@ import { CONFIG } from "./config.js";
 import { getEvents, setOnEvent, log } from "./log.js";
 
 let sent = 0, inflight = false, failures = 0, nextTryAt = 0, sessionRowSent = false, timer = null;
-let ctx = null, lastError = null;
+let ctx = null, lastError = null, isolate = 0, dropped = 0;   // isolate > 0: send one event at a time after the server rejected a batch (400)
 
 function rpc(fn, body, keepalive = false) {
   return fetch(`${CONFIG.supabaseUrl}/rest/v1/rpc/${fn}`, {
@@ -33,8 +33,17 @@ export async function flush(onHide = false) {
       sessionRowSent = true;
     }
     if (sent < events.length) {
-      const batch = events.slice(sent, sent + (onHide ? 50 : CONFIG.flushMaxEvents));
-      await rpc("ingest_events", { p_rows: batch }, onHide);
+      const size = isolate > 0 ? 1 : (onHide ? 50 : CONFIG.flushMaxEvents);
+      const batch = events.slice(sent, sent + size).map((e) => e.session_id ? e : { ...e, session_id: ctx.session.id, pid: ctx.session.pid });
+      try {
+        await rpc("ingest_events", { p_rows: batch }, onHide);
+        if (isolate > 0) isolate--;
+      } catch (e) {
+        if (!/ingest_events 400/.test(String(e.message))) throw e;
+        if (batch.length > 1) { isolate = 30; throw e; }            // find the rejected event by sending one at a time
+        dropped++; isolate = 30;                                    // a single event the server refuses: skip it, keep the session
+        log("upload_dropped", { seq: batch[0].seq, type: batch[0].type, message: String(e.message).slice(0, 160), dropped });
+      }
       sent += batch.length;
     }
     failures = 0; lastError = null;
