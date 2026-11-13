@@ -95,3 +95,6 @@ so gaze analysis uses the logged rectangles directly. Typing speed in characters
 - Playback needs Chrome (or another browser) with Widevine DRM. The pre-check blocks browsers without it with a message, and logs `device_info.drm`. Firefox/Zen showed "Playback error" with no sound in the first test; use Chrome for the study.
 - Spotify hides Spotify-owned playlists from its API. Participants may need to copy such a playlist into their own account.
 - Sessions on one Spotify account cannot overlap.
+
+## Test sessions versus real sessions
+`sessions.is_test` (migration 0004): every session that existed on 2026-11-13 is marked `true` (team pilots and tests). Sessions created after that default to `false` and are the ones to analyse. The admin Sessions tab hides the test ones by default and also treats debug, dry-run, synthetic and mouse-gaze sessions as test. Use fresh participant ids (not P01 or P02, which have test sessions). To exclude test data in SQL: `where not is_test`. Opening a link again always creates a new session row (the session id is random); the pid is only a label.
