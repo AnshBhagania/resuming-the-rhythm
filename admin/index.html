@@ -112,14 +112,22 @@
       <div class="card">
         <div class="row">
           <label>Study key <input id="linkKey" placeholder="paste STUDY_KEY (not stored)" size="30"></label>
-          <label>From <input id="linkFrom" type="number" value="1" min="1" max="99" style="width:64px"></label>
-          <label>To <input id="linkTo" type="number" value="12" min="1" max="99" style="width:64px"></label>
-          <button class="btn primary" id="genLinks">Generate</button>
-          <button class="btn" id="copyAll">Copy all</button>
+          <button class="btn" id="linksRefresh">Refresh</button>
         </div>
-        <p class="muted">One link per participant. The mode order is assigned from the number (P01 = O1 ... P06 = O6, P07 = O1 ...), so each of the 6 orders is used evenly.
-        The study key is only used to build the links in your browser (remembered in this browser) and is not sent anywhere.</p>
-        <table><thead><tr><th>Participant</th><th>Order</th><th>Link</th><th></th></tr></thead><tbody id="linkRows"></tbody></table>
+        <h3>Next participant</h3>
+        <div id="nextBox"></div>
+        <p class="muted">One link at a time. It always picks the order with the fewest runs (finished sessions, runs completed offline, and runs in progress), lowest order number first,
+        so asking again before the participant starts gives the same link. The study key is only used to build the link in your browser (remembered in this browser) and is not sent anywhere.</p>
+      </div>
+      <div class="card">
+        <h3>Runs per order</h3>
+        <table><thead><tr><th>Order</th><th>Modes</th><th>Finished</th><th>Offline</th><th>In progress</th><th>Total</th></tr></thead><tbody id="orderRows"></tbody></table>
+        <p class="muted" id="offlineNote"></p>
+      </div>
+      <div class="card" id="pendingCard" hidden>
+        <h3>Started, not finished (last 3 hours)</h3>
+        <table><thead><tr><th>Participant</th><th>Order</th><th>Last activity</th><th>Events</th><th></th></tr></thead><tbody id="pendingRows"></tbody></table>
+        <p class="muted">These count towards their order. If a participant has really stopped, press "Not running" to free the order (remembered in this browser only).</p>
       </div>
     </section>
 
@@ -204,6 +212,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="plan.js"></script>
 <script>
 const SB_URL = "https://etdtijvlguuxqvehpdvn.supabase.co";
 const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0ZHRpanZsZ3V1eHF2ZWhwZHZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxNTcxMTksImV4cCI6MjEwOTczMzExOX0.Jr0pq6SXzqVGj6P3id9nTgn3jhHXMhMIvR9Nf55ZajY"; // public anon key
@@ -257,6 +266,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   if (b.dataset.tab === "settings") loadSettings();
   if (b.dataset.tab === "issues") loadIssues();
   if (b.dataset.tab === "accounts") loadAccounts();
+  if (b.dataset.tab === "links") openLinks();
 });
 
 // ---------- sessions ----------
@@ -546,30 +556,44 @@ $("tstCopy").onclick = () => navigator.clipboard.writeText(testUrl()).then(() =>
 
 // ---------- participant links ----------
 const ORDERS = { O1: "AUTO DIGI PHYS", O2: "AUTO PHYS DIGI", O3: "DIGI AUTO PHYS", O4: "DIGI PHYS AUTO", O5: "PHYS AUTO DIGI", O6: "PHYS DIGI AUTO" };
-const SITE = location.origin + location.pathname.replace(/admin\/?$/, "");
-let generated = [];
+const SITE = location.origin + location.pathname.replace(/admin\/?(index\.html)?$/, "");
 try { $("linkKey").value = localStorage.getItem("studyKeyAdmin") || ""; } catch (e) { /* storage blocked */ }
-$("genLinks").onclick = () => {
-  const key = $("linkKey").value.trim();
+const getIgnored = () => { try { return JSON.parse(localStorage.getItem("linksIgnored") || "[]"); } catch (e) { return []; } };
+const setIgnored = (a) => { try { localStorage.setItem("linksIgnored", JSON.stringify(a)); } catch (e) { /* storage blocked */ } };
+
+function renderLinks() {
+  const P = window.RhythmPlan, key = $("linkKey").value.trim();
   try { if (key) localStorage.setItem("studyKeyAdmin", key); } catch (e) { /* storage blocked */ }
-  const from = Math.max(1, +$("linkFrom").value || 1), to = Math.min(99, +$("linkTo").value || from);
-  if (!key) { say("Paste the study key first.", true); return; }
-  say("");
-  generated = [];
-  for (let n = from; n <= to; n++) {
-    const pid = "P" + String(n).padStart(2, "0"), order = "O" + (((n - 1) % 6) + 1);
-    generated.push({ pid, order, url: `${SITE}?pid=${pid}&k=${encodeURIComponent(key)}` });
-  }
-  $("linkRows").replaceChildren(...generated.map(g => el("tr", {},
-    el("td", {}, el("strong", { textContent: g.pid })),
-    el("td", { textContent: `${g.order}: ${ORDERS[g.order]}` }),
-    el("td", {}, el("span", { className: "mono", textContent: g.url })),
-    el("td", {}, el("button", { className: "btn", textContent: "Copy", onclick: () => navigator.clipboard.writeText(g.url).then(() => say("Copied " + g.pid)) })))));
-};
-$("copyAll").onclick = () => {
-  if (!generated.length) return;
-  navigator.clipboard.writeText(generated.map(g => `${g.pid}\t${g.url}`).join("\n")).then(() => say(`Copied ${generated.length} links.`));
-};
+  const plan = P.planNext(sessions, { ignored: getIgnored() });
+  const n = plan.next;
+  const url = key ? P.linkFor(SITE, n.pid, n.order, key) : "";
+  const done = Object.values(plan.counts).reduce((t, c) => t + c.finished + c.offline, 0);
+  const label = `${n.pid}, order ${n.order} (${ORDERS[n.order]})`;
+  $("nextBox").replaceChildren(
+    el("p", { style: "font-size:1.15rem" }, el("strong", { textContent: "Participant " + n.pid }), "  \u00b7  ", el("strong", { textContent: "Order " + n.order }), `  (${ORDERS[n.order]})`),
+    key ? el("p", {}, el("span", { className: "mono", textContent: url })) : el("p", { className: "err", textContent: "Paste the study key above to build the link." }),
+    el("button", { className: "btn primary", textContent: "Copy link", disabled: !key, onclick: () => navigator.clipboard.writeText(url).then(() => say(`Copied the link for ${label}.`)) }), " ",
+    el("button", { className: "btn", textContent: "Copy with participant and order", disabled: !key, onclick: () => navigator.clipboard.writeText(`${label}\n${url}`).then(() => say(`Copied ${label} with its link.`)) }),
+    el("p", { className: "muted", textContent: `Completed so far: ${done} participants (${done - plan.offline.length} in the database, ${plan.offline.length} offline).` }));
+  $("orderRows").replaceChildren(...P.ORDER_CODES.map((o) => {
+    const c = plan.counts[o];
+    return el("tr", { style: o === n.order ? "font-weight:600" : "" },
+      el("td", { textContent: o + (o === n.order ? "  \u2190 next" : "") }), el("td", { textContent: ORDERS[o] }),
+      el("td", { textContent: c.finished }), el("td", { textContent: c.offline }), el("td", { textContent: c.pending }), el("td", { textContent: c.total }));
+  }));
+  $("offlineNote").textContent = plan.offline.length ? "Offline runs counted: " + plan.offline.map((o) => `${o.pid} (${o.order})`).join(", ") + ". They stop counting here once the database has a finished session with that participant id." : "";
+  $("pendingCard").hidden = !plan.pending.length;
+  $("pendingRows").replaceChildren(...plan.pending.map((p) => {
+    const purl = key ? P.linkFor(SITE, p.pid, p.order, key) : "";
+    return el("tr", {},
+      el("td", {}, el("strong", { textContent: p.pid })), el("td", { textContent: p.order }), el("td", { textContent: ago(p.last) }), el("td", { textContent: p.n_events }),
+      el("td", {}, el("button", { className: "btn", textContent: "Copy link", disabled: !key, onclick: () => navigator.clipboard.writeText(purl).then(() => say(`Copied the link for ${p.pid}, order ${p.order}.`)) }), " ",
+        el("button", { className: "btn", textContent: "Not running", onclick: () => { setIgnored([...new Set([...getIgnored(), p.pid])]); renderLinks(); } })));
+  }));
+}
+async function openLinks() { await loadSessions(true); renderLinks(); }
+$("linksRefresh").onclick = openLinks;
+$("linkKey").oninput = renderLinks;
 
 boot();
 </script>
