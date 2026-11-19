@@ -116,13 +116,14 @@
         </div>
         <h3>Next participants</h3>
         <div id="nextBox"></div>
-        <p class="muted">Three links at once, each with its own participant number and a different order (the orders with the fewest runs come first: finished sessions, runs completed offline and runs in progress).
-        Use the first link for the participant you are running. Links 2 and 3 are spares for a second or third person, so nobody ever gets the same participant number or order twice.
+        <p class="muted">Three links at once: the lowest participant numbers that are still free, each with its own order. The study has 18 participants (P01 to P18, three sets of the six orders);
+        the number fixes the order, so P01 to P06 are the first set, P07 to P12 the second and P13 to P18 the third. A number counts as taken when its session finished, was completed offline, or is in progress.
+        Use the first link for the participant you are running. Links 2 and 3 are spares for a second or third person, so nobody ever gets the same number twice.
         Asking again before anyone starts gives the same three links. The study key is only used to build the links in your browser (remembered in this browser) and is not sent anywhere.</p>
       </div>
       <div class="card">
         <h3>Runs per order</h3>
-        <table><thead><tr><th>Order</th><th>Modes</th><th>Finished</th><th>Offline</th><th>In progress</th><th>Total</th></tr></thead><tbody id="orderRows"></tbody></table>
+        <table><thead><tr><th>Order</th><th>Modes</th><th>Finished</th><th>Offline</th><th>In progress</th><th>Total / 3</th></tr></thead><tbody id="orderRows"></tbody></table>
         <p class="muted" id="offlineNote"></p>
       </div>
       <div class="card" id="pendingCard" hidden>
@@ -578,14 +579,15 @@ function renderLinks() {
   $("nextBox").replaceChildren(
     key ? "" : el("p", { className: "err", textContent: "Paste the study key above to build the links." }),
     ...plan.nexts.map(card),
-    el("p", { className: "muted", textContent: `Completed runs: ${plan.runs} (${plan.runs - plan.offline.length} in the database, ${plan.offline.length} offline), from ${plan.distinctDone} different participant ids. Participant numbers go up from the highest id ever used, so they can be higher than the number of runs.` }),
-    plan.duplicates.length ? el("p", { className: "err", textContent: "Participant ids with more than one finished run: " + plan.duplicates.join(", ") + ". The same id was handed out twice; give one of the runs a new id before analysis." }) : "");
+    el("p", { style: "font-weight:600", textContent: `Completed: ${plan.runs} of ${plan.target} participants (${plan.runs - plan.offline.length} in the database, ${plan.offline.length} offline).` }),
+    el("p", { className: "muted", textContent: plan.freeInTarget.length ? "Still to run: " + plan.freeInTarget.join(", ") + (plan.pending.length ? "  (some of these may be in progress right now)" : "") : "All 18 numbers are taken." }),
+    plan.duplicates.length ? el("p", { className: "err", textContent: "Participant ids with more than one finished run: " + plan.duplicates.join(", ") + ". The same id was handed out twice; give one of the runs the free number of its order before analysis." }) : "");
   $("orderRows").replaceChildren(...P.ORDER_CODES.map((o) => {
     const c = plan.counts[o];
     const rank = plan.nexts.findIndex((x) => x.order === o);
     return el("tr", { style: rank === 0 ? "font-weight:600" : "" },
       el("td", { textContent: o + (rank === 0 ? "  \u2190 next" : rank > 0 ? "  (spare " + (rank + 1) + ")" : "") }), el("td", { textContent: ORDERS[o] }),
-      el("td", { textContent: c.finished }), el("td", { textContent: c.offline }), el("td", { textContent: c.pending }), el("td", { textContent: c.total }));
+      el("td", { textContent: c.finished }), el("td", { textContent: c.offline }), el("td", { textContent: c.pending }), el("td", { textContent: c.total + " / " + (P.TARGET / P.ORDER_CODES.length) }));
   }));
   $("offlineNote").textContent = plan.offline.length ? "Offline runs counted: " + plan.offline.map((o) => `${o.pid} (${o.order})`).join(", ") + ". They stop counting here once the database has a finished session with that participant id." : "";
   $("pendingCard").hidden = !plan.pending.length;

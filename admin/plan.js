@@ -1,13 +1,17 @@
 // Which participant link comes next? Pure functions (no page access) so they can be tested on their own.
-// Rule: always hand out the order with the fewest runs; ties go to the lowest order number. A run counts when its session has
-// finished (not a test session), when it was completed outside the database (OFFLINE_DONE, see below), or when it is in progress
-// (started in the last PENDING_HOURS hours and not finished), so two people asking for a link in a row never get the same order.
+// The study has TARGET participants, P01..P18: 3 sets of the 6 orders. Participant number N always has order ((N-1) mod 6)+1
+// (P01-P06 are the first set, P07-P12 the second, P13-P18 the third), so the number tells you the order and the set.
+// Rule: hand out the lowest participant numbers that are still free, never two with the same order in one batch. A number is taken when
+// its session has finished (not a test session), when it was completed outside the database (OFFLINE_DONE, see below), or when it is in
+// progress (started in the last PENDING_HOURS hours and not finished), so two people asking for a link in a row never get the same number.
 (function (root) {
   const ORDER_CODES = ["O1", "O2", "O3", "O4", "O5", "O6"];
   // Runs that finished but whose data is not in the database yet (offline JSON). Each entry stops counting by itself as soon as the
   // database has a finished session with that participant id, so importing the JSON later does not count the run twice.
   const OFFLINE_DONE = [{ pid: "P10", order: "O4" }, { pid: "P11", order: "O5" }];
   const PENDING_HOURS = 3;
+  const TARGET = 18;
+  const orderOfNumber = (n) => ORDER_CODES[(n - 1) % ORDER_CODES.length];
 
   const isTest = (s) => !!(s.is_test || (s.flags && (s.flags.debug || s.flags.dryrun || s.flags.nodb || s.flags.gazetest || s.flags.inputtest ||
     s.flags.gazeParam === "mouse" || s.flags.audio === "synthetic")));
@@ -40,25 +44,25 @@
     for (const p of pending) if (counts[p.order]) counts[p.order].pending++;
     for (const o of ORDER_CODES) counts[o].total = counts[o].finished + counts[o].offline + counts[o].pending;
 
-    // Hand out `count` links at once (default 3). Each gets the next free participant number and a different order:
-    // the order with the fewest runs first, ties to the lowest order number, and no order twice in the same batch.
-    const maxPid = Math.max(0, ...sessions.map((s) => pidNumber(s.pid)), ...OFFLINE_DONE.map((o) => pidNumber(o.pid)));
-    const nexts = [], used = new Set();
-    for (let i = 0; i < Math.min(opts.count ?? 1, ORDER_CODES.length); i++) {
-      let order = null;
-      for (const o of ORDER_CODES) if (!used.has(o) && (order === null || counts[o].total < counts[order].total)) order = o;
-      used.add(order);
-      nexts.push({ pid: "P" + String(maxPid + 1 + i).padStart(2, "0"), order });
+    // Hand out `count` links at once (default 1): the lowest free participant numbers, each with the order that number stands for,
+    // skipping a number whose order is already in the batch (so three links are always three different orders).
+    const taken = new Set([...finished.map((s) => pidNumber(s.pid)), ...OFFLINE_DONE.map((o) => pidNumber(o.pid)), ...pending.map((p) => pidNumber(p.pid))]);
+    const nexts = [], usedOrders = new Set();
+    for (let n = 1; n <= 99 && nexts.length < (opts.count ?? 1); n++) {
+      if (taken.has(n) || usedOrders.has(orderOfNumber(n))) continue;
+      usedOrders.add(orderOfNumber(n));
+      nexts.push({ pid: "P" + String(n).padStart(2, "0"), order: orderOfNumber(n) });
     }
+    const freeInTarget = []; for (let n = 1; n <= TARGET; n++) if (!taken.has(n)) freeInTarget.push("P" + String(n).padStart(2, "0"));
     // Participant ids that have more than one finished run (the same id was handed out twice).
     const perPid = {};
     for (const s of finished) perPid[s.pid] = (perPid[s.pid] || 0) + 1;
     const duplicates = Object.keys(perPid).filter((p) => perPid[p] > 1).sort();
     const runs = finished.length + offline.length;
     const distinctDone = new Set([...finished.map((s) => s.pid), ...offline.map((o) => o.pid)]).size;
-    return { next: nexts[0], nexts, counts, pending, offline, duplicates, runs, distinctDone };
+    return { next: nexts[0], nexts, counts, pending, offline, duplicates, runs, distinctDone, freeInTarget, target: TARGET };
   }
 
   const linkFor = (site, pid, order, key) => `${site}?pid=${encodeURIComponent(pid)}&order=${order}&k=${encodeURIComponent(key)}`;
-  root.RhythmPlan = { ORDER_CODES, OFFLINE_DONE, PENDING_HOURS, planNext, isTest, linkFor };
+  root.RhythmPlan = { ORDER_CODES, OFFLINE_DONE, PENDING_HOURS, TARGET, orderOfNumber, planNext, isTest, linkFor };
 })(typeof window !== "undefined" ? window : globalThis);

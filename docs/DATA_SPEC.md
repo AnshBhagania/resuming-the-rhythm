@@ -181,3 +181,7 @@ Do not infer anything about the research question from n = 1 with 4 interruption
 - Screening on baseline speed and accuracy (and self-reported touch typing) versus keeping everyone.
 - Whether to make the task more forgiving (no fix-and-recover loop), or keep Monkeytype rules.
 - How to use gaze at all, given the observed accuracy and drift (for example only as relative, within-block reference, or only as a check that the participant looked at the screen).
+
+## Participant numbers
+The study has 18 participants, P01 to P18: three sets of the six orders. Participant number N has order ((N-1) mod 6)+1 (O1 = P01, P07, P13; O2 = P02, P08, P14; and so on), and the admin Links tab hands out the lowest free numbers.
+Two numbers were handed out twice by mistake, and migration `0005_renumber_duplicate_pids.sql` moved one run of each to the free slot of its order: the first P03 run (session `07c8b0d4`, 2026-11-17 11:38) became **P09**, the second P03 run keeps P03, and the second P14 run (session `8b7dc744`, 2026-11-19 17:45) became **P08**. The id it was recorded under stays in `sessions.pid_original`. Abandoned attempts (consent or precheck screens only) keep whatever id they were opened with and are not participants.
