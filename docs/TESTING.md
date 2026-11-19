@@ -70,7 +70,7 @@ The built-in browser of the Claude app has no Widevine DRM, so Claude cannot tes
 | Typing stays locked until audio is actually playing (`music_play`) | Done (synthetic) / **To do** real | |
 | Resume latency: `audio_play_called` to `music_play`, over a normal and a slow network | **To do** | log; expect hundreds of ms |
 | Playback after the Spotify token expires (1 h) and with long sessions | **To do** | long run |
-| Another device starts playing on the same account mid-session (SDK reports moved/not ready) | **To do**, behaviour unknown | `audio_error` events |
+| Another device starts playing on the same account mid-session (SDK reports moved/not ready) | Recovery implemented in 0.9.0 and checked against a mocked player (lost while playing, lost while paused, device gone). **Not yet seen with real Spotify** | `audio_lost`, `audio_recovered`, `audio_recover_failed` events |
 | Link without `&k=` shows the missing-key message | Done | |
 | Firefox / Safari: not supported on purpose (Chrome only) | Decide | |
 

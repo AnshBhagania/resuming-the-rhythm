@@ -35,6 +35,14 @@ export function createAudio({ kind, cfg, pid, studyKey, sessionId, silent = fals
   const PROBLEM_KINDS = ["playback_error", "initialization_error", "authentication_error", "account_error"];
   impl.onError = (info) => { log("audio_error", info); if (PROBLEM_KINDS.includes(info.kind)) problemListeners.forEach((fn) => fn(info)); };
   impl.onAccount = (label) => log("spotify_account", { label });
+  // Spotify can drop our player's playback (state null: moved to another device, or the player session was lost). If the music was
+  // supposed to be playing, bring it back at the same track and position; otherwise the next play() re-sends the playlist.
+  impl.onLost = async (info) => {
+    log("audio_lost", { ...info, was_playing: playing });
+    if (!playing) return;
+    const r = await impl.recover?.().catch((e) => ({ ok: false, error: String(e.message || e) }));
+    if (r) log(r.ok ? "audio_recovered" : "audio_recover_failed", r);
+  };
 
   return {
     kind,
@@ -117,6 +125,7 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
   let token = null, tokenExp = 0;
   let volume = 1;   // default full: the computer volume is the real control (a web page cannot read or set it)
   let last = { paused: true, position: 0, at: 0, trackId: null };
+  let lost = false;          // the player lost its playback context: the next play must re-send the playlist, not just resume
   const waiters = [];
   let sdkPromise = null, connectPromise = null;
 
@@ -170,6 +179,31 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
     return sdkPromise;
   }
 
+  // Freeze the position (the player no longer reports it) and flag that the playlist must be sent again.
+  function markLost(kind) {
+    const position = impl.position();
+    last = { ...last, paused: true, position, at: performance.now() };
+    lost = true;
+    impl.onError?.({ kind });
+    impl.onLost?.({ kind, track: last.trackId, position_ms: position });
+  }
+  // Start (or restart) the playlist on our device. After a loss it continues at the same track and position.
+  async function startContext(fromLast) {
+    const body = { context_uri: playlistUri, position_ms: 0 };
+    if (fromLast && last.trackId) { body.offset = { uri: "spotify:track:" + last.trackId }; body.position_ms = Math.max(0, last.position); }
+    const res = await api(`/me/player/play?device_id=${deviceId}`, { method: "PUT", body: JSON.stringify(body) });
+    if (!res.ok) { impl.onError?.({ kind: "play_http", status: res.status }); return res; }
+    started = true; lost = false;
+    api(`/me/player/repeat?state=context&device_id=${deviceId}`, { method: "PUT" });
+    return res;
+  }
+  // Throw the player away and connect a new one (new device id). Used when starting on our device fails.
+  async function reconnect() {
+    try { player?.disconnect(); } catch (x) { /* ignore */ }
+    player = null; deviceId = null; connectPromise = null;
+    await impl.activate();
+  }
+
   const impl = {
     volume,
     // Must be called from a click handler (browser autoplay policy).
@@ -179,10 +213,13 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
         await loadSdk();
         player = new window.Spotify.Player({ name: "Typing Study", volume, getOAuthToken: (cb) => getToken().then(cb).catch(e => impl.onError?.({ kind: "token", message: String(e) })) });
         for (const ev of ["initialization_error", "authentication_error", "account_error", "playback_error"])
-          player.addListener(ev, (e) => impl.onError?.({ kind: ev, message: e.message }));
+          player.addListener(ev, (e) => {
+            impl.onError?.({ kind: ev, message: e.message });
+            if (ev === "playback_error" && /no list was loaded/i.test(e.message || "")) lost = true;   // the context is gone: resume() can never work again
+          });
         player.addListener("autoplay_failed", () => impl.onError?.({ kind: "autoplay_failed" }));
         player.addListener("player_state_changed", (s) => {
-          if (!s) { impl.onError?.({ kind: "state_null_moved_to_other_device" }); return; }
+          if (!s) { markLost("state_null_moved_to_other_device"); return; }
           const t = performance.now();
           const cur = s.track_window?.current_track;
           const trackId = cur?.id ?? null;
@@ -191,8 +228,8 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
             artists: (cur.artists || []).map((a) => a.name), album: cur.album?.name ?? null, duration_ms: cur.duration_ms ?? null,
             track_uri: cur.uri ?? null, context_uri: s.context?.uri ?? null, shuffle: s.shuffle ?? null, repeat_mode: s.repeat_mode ?? null
           });
-          last = { paused: s.paused, position: s.position, at: t, trackId };
-          if (!s.paused) while (waiters.length) waiters.shift()(t);
+          last = { paused: s.paused, position: s.position, at: t, trackId: trackId ?? last.trackId };
+          if (!s.paused) { lost = false; while (waiters.length) waiters.shift()(t); }
         });
         const ready = new Promise((resolve, reject) => {
           player.addListener("ready", ({ device_id }) => { deviceId = device_id; resolve(); });
@@ -221,7 +258,7 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
       started = false;
       return { name: name || (type === "album" ? "Spotify album" : "Spotify playlist"), total_ms: null, n_tracks: null, uri: playlistUri, context_type: type, unverified };
     },
-    reset() { started = false; },
+    reset() { started = false; lost = false; },
     unlock() { player?.activateElement?.(); },
     setStudyKey(k) { studyKey = k; },
     release(keepalive = false) { clearInterval(heartbeat); heartbeat = null; return callBroker("release", keepalive).catch(() => {}); },
@@ -232,15 +269,30 @@ function spotifyImpl({ cfg, pid, studyKey, sessionId }) {
       await impl.activate();
       const waitPlaying = new Promise(r => waiters.push(r));
       await player.setVolume(0);
-      if (!started) {
-        const res = await api(`/me/player/play?device_id=${deviceId}`, { method: "PUT", body: JSON.stringify({ context_uri: playlistUri, position_ms: 0 }) });
-        if (!res.ok) { impl.onError?.({ kind: "play_http", status: res.status }); }
-        else { started = true; api(`/me/player/repeat?state=context&device_id=${deviceId}`, { method: "PUT" }); }
+      if (!started || lost) {
+        const fromLast = lost;
+        let res = await startContext(fromLast);
+        if (!res.ok) {                                   // our device is gone or not accepted: connect a new player and try once more
+          await reconnect(); await player.setVolume(0);
+          res = await startContext(fromLast);
+        }
       } else await player.resume();
       const t = await waitPlaying;
       const steps = 8;
       for (let i = 1; i <= steps; i++) { player.setVolume(volume * i / steps); await sleep(fadeMs / steps); }
       return { t };
+    },
+    // Called by the wrapper when playback was lost while the music should be playing.
+    async recover() {
+      const waitPlaying = new Promise(r => waiters.push(r));
+      await impl.activate();
+      await player.setVolume(0);
+      let res = await startContext(true);
+      if (!res.ok) { await reconnect(); await player.setVolume(0); res = await startContext(true); }
+      if (!res.ok) return { ok: false, status: res.status };
+      await Promise.race([waitPlaying, sleep(10000)]);
+      player.setVolume(volume);
+      return { ok: !lost, track: last.trackId, position_ms: impl.position() };
     },
     async rawPause() { await player?.pause(); }
   };

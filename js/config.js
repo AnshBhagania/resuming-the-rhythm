@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.8.9";
+export const APP_VERSION = "0.9.0";
 
 export const CONFIG = {
   baselineSeconds: 120,

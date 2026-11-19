@@ -40,11 +40,23 @@
     for (const p of pending) if (counts[p.order]) counts[p.order].pending++;
     for (const o of ORDER_CODES) counts[o].total = counts[o].finished + counts[o].offline + counts[o].pending;
 
-    let order = ORDER_CODES[0];
-    for (const o of ORDER_CODES) if (counts[o].total < counts[order].total) order = o;
+    // Hand out `count` links at once (default 3). Each gets the next free participant number and a different order:
+    // the order with the fewest runs first, ties to the lowest order number, and no order twice in the same batch.
     const maxPid = Math.max(0, ...sessions.map((s) => pidNumber(s.pid)), ...OFFLINE_DONE.map((o) => pidNumber(o.pid)));
-    const pid = "P" + String(maxPid + 1).padStart(2, "0");
-    return { next: { pid, order }, counts, pending, offline };
+    const nexts = [], used = new Set();
+    for (let i = 0; i < Math.min(opts.count ?? 1, ORDER_CODES.length); i++) {
+      let order = null;
+      for (const o of ORDER_CODES) if (!used.has(o) && (order === null || counts[o].total < counts[order].total)) order = o;
+      used.add(order);
+      nexts.push({ pid: "P" + String(maxPid + 1 + i).padStart(2, "0"), order });
+    }
+    // Participant ids that have more than one finished run (the same id was handed out twice).
+    const perPid = {};
+    for (const s of finished) perPid[s.pid] = (perPid[s.pid] || 0) + 1;
+    const duplicates = Object.keys(perPid).filter((p) => perPid[p] > 1).sort();
+    const runs = finished.length + offline.length;
+    const distinctDone = new Set([...finished.map((s) => s.pid), ...offline.map((o) => o.pid)]).size;
+    return { next: nexts[0], nexts, counts, pending, offline, duplicates, runs, distinctDone };
   }
 
   const linkFor = (site, pid, order, key) => `${site}?pid=${encodeURIComponent(pid)}&order=${order}&k=${encodeURIComponent(key)}`;

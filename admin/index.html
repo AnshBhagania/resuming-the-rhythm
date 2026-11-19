@@ -114,10 +114,11 @@
           <label>Study key <input id="linkKey" placeholder="paste STUDY_KEY (not stored)" size="30"></label>
           <button class="btn" id="linksRefresh">Refresh</button>
         </div>
-        <h3>Next participant</h3>
+        <h3>Next participants</h3>
         <div id="nextBox"></div>
-        <p class="muted">One link at a time. It always picks the order with the fewest runs (finished sessions, runs completed offline, and runs in progress), lowest order number first,
-        so asking again before the participant starts gives the same link. The study key is only used to build the link in your browser (remembered in this browser) and is not sent anywhere.</p>
+        <p class="muted">Three links at once, each with its own participant number and a different order (the orders with the fewest runs come first: finished sessions, runs completed offline and runs in progress).
+        Use the first link for the participant you are running. Links 2 and 3 are spares for a second or third person, so nobody ever gets the same participant number or order twice.
+        Asking again before anyone starts gives the same three links. The study key is only used to build the links in your browser (remembered in this browser) and is not sent anywhere.</p>
       </div>
       <div class="card">
         <h3>Runs per order</h3>
@@ -564,21 +565,26 @@ const setIgnored = (a) => { try { localStorage.setItem("linksIgnored", JSON.stri
 function renderLinks() {
   const P = window.RhythmPlan, key = $("linkKey").value.trim();
   try { if (key) localStorage.setItem("studyKeyAdmin", key); } catch (e) { /* storage blocked */ }
-  const plan = P.planNext(sessions, { ignored: getIgnored() });
-  const n = plan.next;
-  const url = key ? P.linkFor(SITE, n.pid, n.order, key) : "";
-  const done = Object.values(plan.counts).reduce((t, c) => t + c.finished + c.offline, 0);
-  const label = `${n.pid}, order ${n.order} (${ORDERS[n.order]})`;
+  const plan = P.planNext(sessions, { ignored: getIgnored(), count: 3 });
+  const urlOf = (x) => key ? P.linkFor(SITE, x.pid, x.order, key) : "";
+  const labelOf = (x) => `${x.pid}, order ${x.order} (${ORDERS[x.order]})`;
+  const card = (x, i) => el("div", { style: "margin:.6rem 0;padding:.6rem .8rem;border:1px solid var(--border,#ccc);border-radius:8px;" + (i === 0 ? "font-weight:600" : "") },
+    el("p", { style: "margin:0 0 .3rem;font-size:" + (i === 0 ? "1.15rem" : "1rem") },
+      el("span", { className: "badge " + (i === 0 ? "ok" : ""), textContent: i === 0 ? "use this one now" : "spare " + (i + 1) }), "  ",
+      el("strong", { textContent: "Participant " + x.pid }), "  \u00b7  ", el("strong", { textContent: "Order " + x.order }), `  (${ORDERS[x.order]})`),
+    key ? el("p", { style: "margin:0 0 .3rem" }, el("span", { className: "mono", textContent: urlOf(x) })) : null,
+    el("button", { className: "btn" + (i === 0 ? " primary" : ""), textContent: "Copy link", disabled: !key, onclick: () => navigator.clipboard.writeText(urlOf(x)).then(() => say(`Copied the link for ${labelOf(x)}.`)) }), " ",
+    el("button", { className: "btn", textContent: "Copy with participant and order", disabled: !key, onclick: () => navigator.clipboard.writeText(`${labelOf(x)}\n${urlOf(x)}`).then(() => say(`Copied ${labelOf(x)} with its link.`)) }));
   $("nextBox").replaceChildren(
-    el("p", { style: "font-size:1.15rem" }, el("strong", { textContent: "Participant " + n.pid }), "  \u00b7  ", el("strong", { textContent: "Order " + n.order }), `  (${ORDERS[n.order]})`),
-    key ? el("p", {}, el("span", { className: "mono", textContent: url })) : el("p", { className: "err", textContent: "Paste the study key above to build the link." }),
-    el("button", { className: "btn primary", textContent: "Copy link", disabled: !key, onclick: () => navigator.clipboard.writeText(url).then(() => say(`Copied the link for ${label}.`)) }), " ",
-    el("button", { className: "btn", textContent: "Copy with participant and order", disabled: !key, onclick: () => navigator.clipboard.writeText(`${label}\n${url}`).then(() => say(`Copied ${label} with its link.`)) }),
-    el("p", { className: "muted", textContent: `Completed so far: ${done} participants (${done - plan.offline.length} in the database, ${plan.offline.length} offline).` }));
+    key ? "" : el("p", { className: "err", textContent: "Paste the study key above to build the links." }),
+    ...plan.nexts.map(card),
+    el("p", { className: "muted", textContent: `Completed runs: ${plan.runs} (${plan.runs - plan.offline.length} in the database, ${plan.offline.length} offline), from ${plan.distinctDone} different participant ids. Participant numbers go up from the highest id ever used, so they can be higher than the number of runs.` }),
+    plan.duplicates.length ? el("p", { className: "err", textContent: "Participant ids with more than one finished run: " + plan.duplicates.join(", ") + ". The same id was handed out twice; give one of the runs a new id before analysis." }) : "");
   $("orderRows").replaceChildren(...P.ORDER_CODES.map((o) => {
     const c = plan.counts[o];
-    return el("tr", { style: o === n.order ? "font-weight:600" : "" },
-      el("td", { textContent: o + (o === n.order ? "  \u2190 next" : "") }), el("td", { textContent: ORDERS[o] }),
+    const rank = plan.nexts.findIndex((x) => x.order === o);
+    return el("tr", { style: rank === 0 ? "font-weight:600" : "" },
+      el("td", { textContent: o + (rank === 0 ? "  \u2190 next" : rank > 0 ? "  (spare " + (rank + 1) + ")" : "") }), el("td", { textContent: ORDERS[o] }),
       el("td", { textContent: c.finished }), el("td", { textContent: c.offline }), el("td", { textContent: c.pending }), el("td", { textContent: c.total }));
   }));
   $("offlineNote").textContent = plan.offline.length ? "Offline runs counted: " + plan.offline.map((o) => `${o.pid} (${o.order})`).join(", ") + ". They stop counting here once the database has a finished session with that participant id." : "";
