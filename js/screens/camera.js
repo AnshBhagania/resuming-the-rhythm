@@ -36,7 +36,7 @@ export function render(root, api) {
       await video.play().catch(() => {});
       log("gaze_state", { state: "camera_preview_on", label: stream.getVideoTracks()[0]?.label?.slice(0, 60) });
       msg.textContent = c.previewOn;
-      previewBox.hidden = false; allow.hidden = true; ok.hidden = false;
+      previewBox.hidden = false; allow.hidden = true; ok.hidden = false; skipLink.hidden = true; confirmBox.hidden = true;
     } catch (e) {
       log("gaze_state", { state: "denied", name: e.name, message: e.message });
       const why = c.errors?.[e.name] ?? c.errors?.other;
@@ -46,8 +46,12 @@ export function render(root, api) {
     }
   } }, c.allow);
   const ok = el("button", { class: "primary", hidden: true, onclick: () => finish("permitted", { preview_confirmed: true }) }, c.previewOk);
-  const skip = el("button", { class: "primary", hidden: !g.optional, onclick: () => finish("declined") }, c.skip);
+  // Skipping is optional but deliberate: a small text link (never a primary button), then a confirmation step with "Go back" as the main choice.
+  const skipBack = el("button", { class: "primary", onclick: () => { log("gaze_skip_cancelled"); confirmBox.hidden = true; skipLink.hidden = false; } }, c.skipBack);
+  const skipYes = el("button", { class: "link", onclick: () => finish("declined", { confirmed: true }) }, c.skipConfirm);
+  const confirmBox = el("div", { class: "skip-confirm", hidden: true }, el("p", { class: "note" }, c.skipAsk), skipBack, " ", skipYes);
+  const skipLink = el("button", { class: "link", hidden: !g.optional, onclick: () => { log("gaze_skip_asked"); skipLink.hidden = true; confirmBox.hidden = false; skipBack.focus(); } }, c.skip);
   mount(root, screen(c.title,
     s.gaze.kind === "mouse" ? el("p", { class: "sim-banner" }, api.content.gaze.mouseBanner) : null,
-    el("p", {}, c.body), msg, previewBox, allow, ok, " ", skip));
+    el("p", {}, c.body), msg, previewBox, allow, ok, el("div", { class: "skip-row" }, skipLink, confirmBox)));
 }

@@ -71,6 +71,11 @@ button.primary:hover:not(:disabled) { background: var(--accent-strong); }
 button.primary:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
 button.primary:disabled { background: #e6e9ee; color: #565c65; box-shadow: none; cursor: not-allowed; }
 .screen > button.primary, .screen > .btnrow { margin-top: 22px; }
+button.link { background: none; border: 0; padding: 4px 2px; color: var(--muted); font-size: .9rem; text-decoration: underline; cursor: pointer; }
+button.link:hover { color: var(--fg); }
+.skip-row { margin-top: 28px; }
+.skip-confirm { margin-top: 4px; }
+.skip-confirm button.primary { margin-right: 10px; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; box-shadow: var(--ring); }
 .nav-back { display: inline-flex; align-items: center; margin: -14px 0 14px -10px; padding: 6px 12px; border: 0; background: none; color: var(--muted); font-weight: 550; cursor: pointer; border-radius: 10px; }
 .nav-back:hover { color: var(--fg); background: #eef0f4; }
